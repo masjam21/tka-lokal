@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('rombel.show')}}?school={{form.sekolah_id}}">Peserta</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-6 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="id" value="{{id}}"/>
+                        <div class="form-group">
+                            <label class="form-label">Sekolah</label>
+                            <select id="select-sekolah" name="sekolah_id" class="form-control form-select select2-show-search" data-bs-placeholder="Pilih sekolah . .">
+                                <option value="">Pilih . . </option>
+                                {% for i in school_list %}
+                                <option value="{{i.id}}" {{'selected' if i.id == form.sekolah_id else ''}}>{{i.nama}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tingkatan</label>
+                            <select id="select-rombel" name="tingkat_pendidikan" class="form-control form-select" data-bs-placeholder="Pilih kecamatan . .">
+                                {% for i in range(1,7) %}
+                                <option value="{{i}}" {{'selected' if i|string == form.tingkat_pendidikan}}>Kelas {{i}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-name" class="form-label">Nama</label>
+                            <input name="nama" type="text" placeholder="misal: Kelas 5A" class="form-control" id="input-name" value="{{form.nama if form.nama is not none else ''}}">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    $('.select2-show-search').select2({
+        minimumResultsForSearch: '',
+        width: '100%'
+    });
+
+</script>
+{% endblock script_custom %}

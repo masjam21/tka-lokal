@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">Hasil Ujian</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('exam.show')}}">Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">Hasil Ujian</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daftar Peserta Ujian</h3>
+                <div class="card-options">
+                    {% if current_user.role == 'proktor' %}
+                        {# <a href="{{url_for('exam.upload', exam_id=exam_id)}}" class="btn btn-primary btn-sm"><i class="zmdi zmdi-upload me-2"></i>Upload Hasil</a> #}
+                        <a href="{{url_for('exam.print_all', exam_id=exam_id)}}" class="btn btn-sm btn-primary ms-2"><i class="mdi mdi-printer me-1"></i>Print</a>
+                        <a href="{{url_for('exam.download', exam_id=exam_id)}}" class="btn btn-sm btn-success ms-2"><i class="zmdi zmdi-download me-1"></i>Download</a>
+                        <a href="{{url_for('exam.uraian', exam_id=exam_id)}}" class="btn btn-sm btn-secondary ms-2"><i class="zmdi zmdi-file me-1"></i>Uraian</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class=" row mb-4">
+                    <label for="input-sekolah" class="col-md-3 col-xl-2 form-label">Filter Sekolah:</label>
+                    <div class="col-md-9 col-xl-5">
+                        <select name="pemisah" id="input-sekolah" class="form-control form-select select2-show-search" data-bs-placeholder="Pilih Sekolah" onchange="window.location='{{url_for('exam.student_list', exam_id=exam_id)}}?school='+this.options[this.selectedIndex].value">
+                            <option value="" >Pilih Sekolah . .</option>
+                            {% for i in school_list %}
+                            <option value="{{i.id}}" {{'selected' if args.get('school','') == i.id else ''}}>{{i.nama}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap border-bottom" id="basic-datatable">
+                        <thead>
+                            <tr>
+                                <th class="wd-10p border-bottom-0">No</th>
+                                <th class="wd-15p border-bottom-0">Nomor Peserta</th>
+                                <th class="wd-15p border-bottom-0">Nama</th>
+                                <th class="wd-15p border-bottom-0">Kelas</th>
+                                {% for i in ujian_list.pelajaran_ujian %}
+                                {% if i.deleted != True %}
+                                <th class="wd-15p border-bottom-0">{{i.pelajaran.nama}}</th>
+                                {% endif %}
+                                {% endfor %}
+                                <th class="wd-15p border-bottom-0">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in student_list %}
+                            <tr>
+                                <td>{{loop.index}}</td>
+                                <td>{{student_list[i].username}}</td>
+                                <td>{{student_list[i].nama}}</td>
+                                <td>{{student_list[i].rombongan_belajar or '-'}}</td>
+                                {% for j in ujian_list.pelajaran_ujian %}
+                                {% if j.deleted != True %}
+                                <td>{{ ('%0.2f' % student_list[i]['hasil'][j.pelajaran_id]|float if student_list[i]['hasil'][j.pelajaran_id] is not none else '') if i in student_list and j.pelajaran_id in student_list[i]['hasil'] else '' }}</td>
+                                {# <td>{{ student_list[i]['hasil'][j.pelajaran_id] if student_list[i]['hasil'][j.pelajaran_id] is not none else '' }}</td> #}
+                                {# <td>{{ student_list[i]['hasil'][j.pelajaran_id] if student_list[i]['hasil'][j.pelajaran_id] is not none else '' }}</td> #}
+                                {# <td>{{ student_list[i]['hasil'][j.pelajaran_id] if student_list[i]['hasil'][j.pelajaran_id] is not none }}</td> #}
+                                {% endif %}
+                                {% endfor %}
+                                <td>
+                                    {% if i.waktu_selesai is not none %}
+                                    {# <a href="{{url_for('exam.review', exam_id=i.ujian_id, schedule_id=i.jadwal_ujian_id, lesson_id=i.pelajaran_id, user_id=i.user_id)}}" class="btn btn-sm btn-primary">Tinjau</a> #}
+                                    <a href="{{url_for('exam.review', ujian_peserta_id=student_list[i]['ujian_peserta_id'])}}" class="btn btn-sm btn-primary">Tinjau</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATA TABLE JS-->
+<script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.bootstrap5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/pdfmake.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/vfs_fonts.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    var table = $('#basic-datatable').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        dom: 'lBfrtip',
+        buttons: [
+            {
+                extend: 'copyHtml5',
+                
+            },
+            {
+                extend: 'csvHtml5',
+                
+            },
+            {
+                extend: 'excelHtml5',
+                
+            },
+            {
+                extend: 'pdfHtml5',
+                
+            },
+            {
+                extend: 'print',
+                
+            },
+        ]
+    });
+
+    $('.select2-show-search').select2({
+        minimumResultsForSearch: '',
+        width: '100%'
+    });
+</script>
+{% endblock script_custom %}
+

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block style %}
+<style>
+#container-answer {
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+#number {
+    width: 5%;
+}
+#answer {
+    width: 90%;
+}
+</style>
+{% endblock style %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">Pertanyaan</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('lesson.show')}}">Pelajaran</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{lesson.kode}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daftar Pertanyaan "{{lesson.nama}}"</h3>
+                <div class="card-options">
+                    <a href="{{url_for('lesson.question.add', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm"><i class="zmdi zmdi-plus me-2"></i>Tambah</a>
+                    <a href="{{url_for('lesson.question.import_', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm ms-2"><i class="zmdi zmdi-upload me-2"></i>Import</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap border-bottom" id="basic-datatable">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0">No</th>
+                                <th class="border-bottom-0" style="white-space: normal; min-width: 100px;">Pertanyaan</th>
+                                <th class="border-bottom-0">Analisa</th>
+                                <th class="border-bottom-0">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in question_list %}
+                            <tr>
+                                <td>{{loop.index}}</td>
+                                <td style="white-space: normal; min-width: 100px;">
+                                    <ul>
+                                        <li><b>Pertanyaan:</b></li>
+                                        <li>{{i.pertanyaan|safe}}</li>
+                                        <li><br></li>
+                                        <li><b>Pilihan:</b></li>
+                                        {% for j in ['a','b','c','d','e'][:i.jumlah_pilihan] %}
+                                        <li>
+                                            <div id="container-answer">
+                                                <div id="number">
+                                                    {{j.upper()}}. 
+                                                </div>
+                                                <div id="answer">
+                                                    {{i['pilihan_{}'.format(j)]|safe}}
+                                                </div>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                        <li><br></li>
+                                        <li><b>Jawaban: {{i.jawaban}}</b></li>
+                                    <ul>
+                                </td>
+                                <td>
+                                    <ul>
+                                        <li>Total Jawaban: {{i['total']}}</li>
+                                        <li>Benar: {{i['jawaban_benar']}}</li>
+                                        <li>A: {{i['jawaban_A']}}</li>
+                                        <li>B: {{i['jawaban_B']}}</li>
+                                        <li>C: {{i['jawaban_C']}}</li>
+                                        <li>D: {{i['jawaban_D']}}</li>
+                                        <li>E: {{i['jawaban_E']}}</li>
+                                    </ul>
+                                </td>
+                                <td>
+                                    <a href="{{url_for('lesson.question.preview', lesson_id=lesson.id, question_id=i.id)}}" class="btn btn-sm btn-primary"><i class="mdi mdi-eye me-2"></i>Preview</a>
+                                    <a href="{{url_for('lesson.question.edit', lesson_id=lesson.id, question_id=i.id)}}" class="btn btn-sm btn-primary"><i class="mdi mdi-pencil me-2"></i>Edit</a>
+                                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin?') == true) location.href='{{url_for('lesson.question.delete', lesson_id=lesson.id, question_id=i.id)}}'" class="btn btn-sm btn-danger"><i class="mdi mdi-delete me-1"></i>Hapus</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATA TABLE JS-->
+<script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.bootstrap5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/pdfmake.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/vfs_fonts.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    var table = $('#basic-datatable').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+    });
+</script>
+{% endblock script_custom %}
+

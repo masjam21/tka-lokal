@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('student.show')}}?school={{form.sekolah_id}}">Peserta</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-6 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="id" value="{{id}}"/>
+                        <div class="form-group">
+                            <label for="input-username" class="form-label">Nomor Peserta</label>
+                            <input name="username" type="text" class="form-control" id="input-username" value="{{ form.username if form.username is not none else '' }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-password" class="form-label">Password</label>
+                            <input name="password" type="password" class="form-control" id="input-password">
+                            {% if id is not none or id == '' %}
+                            <small>*Kosongkan password apabila anda tidak ingin mengedit password.</small>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="input-name" class="form-label">Nama</label>
+                            <input name="nama" type="text" class="form-control" id="input-name" value="{{form.nama if form.nama is not none else ''}}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sekolah</label>
+                            <select id="select-sekolah" name="sekolah_id" class="form-control form-select select2-show-search" data-bs-placeholder="Pilih sekolah . ." onchange="selectSekolah(this);" readonly>
+                                <option value="">Pilih . . </option>
+                                {% for i in school_list %}
+                                <option value="{{i.id}}" {{'selected' if i.id == form.sekolah_id else ''}}>{{i.nama}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rombongan Belajar</label>
+                            <select id="select-rombel" name="rombongan_belajar_id" class="form-control form-select select2-show-search" data-bs-placeholder="Pilih kecamatan . ." readonly>
+                                <option value="">Pilih . . </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-nis" class="form-label">NIS</label>
+                            <input name="nis" type="text" class="form-control" id="input-nis" value="{{ form.nis if form.nis is not none else '' }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-nik" class="form-label">NIK</label>
+                            <input name="nik" type="text" class="form-control" id="input-nik" value="{{form.nik if form.nik is not none else ''}}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-ibu" class="form-label">Nama Ibu</label>
+                            <input name="ibu" type="text" class="form-control" id="input-ibu" value="{{form.ibu if form.ibu is not none else ''}}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-ayah" class="form-label">Nama Ayah</label>
+                            <input name="ayah" type="text" class="form-control" id="input-ayah" value="{{form.ayah if form.ayah is not none else ''}}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Jenis Kelamin</label>
+                            <select name="jenis_kelamin" class="form-control form-select" data-bs-placeholder="Pilih kecamatan . ." readonly>
+                                <option value="">Pilih . . </option>
+                                <option value="L" {{'selected' if 'L' == form.jenis_kelamin}}>Laki-laki</option>
+                                <option value="P" {{'selected' if 'P' == form.jenis_kelamin}}>Perempuan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-tempat-lahir" class="form-label">Tempat Lahir</label>
+                            <input name="tempat_lahir" type="text" class="form-control" id="input-tempat-lahir" value="{{form.tempat_lahir if form.tempat_lahir is not none else ''}}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-tanggal-lahir" class="form-label">Tanggal Lahir</label>
+                            <input name="tanggal_lahir_str" type="text" class="form-control" id="input-tanggal-lahir" value="{{form.tanggal_lahir_str if form.tanggal_lahir_str is not none else ''}}" readonly>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+<!-- DATEPICKER JS -->
+<script src="{{url_for('static', filename='plugins/date-picker/date-picker.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/date-picker/jquery-ui.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/input-mask/jquery.maskedinput.js')}}"></script>
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    var sekolah_id = '{{form.sekolah_id}}'
+    var rombel_id = '{{form.rombongan_belajar_id}}'
+
+    $(document).ready(() => {
+        getRombel(sekolah_id)
+        $('#input-tanggal-lahir').datepicker({
+            showOtherMonths: true,
+            selectOtherMonths: true
+        }).on("show", function() {
+            var dd = new Date('{{form.tanggal_lahir}}')
+            console.log(dd)
+            $(this).val(dd).datepicker('update');
+        });
+    })
+
+    function selectSekolah(sel) {
+        getRombel(sel.value)
+    }
+
+    function getRombel(sekolah_id) {
+        let selectItems = document.querySelector('#select-rombel')
+        selectItems.querySelectorAll('*').forEach(el => el.remove());
+
+        $.get("{{url_for('rombel.json_show')}}?sekolah="+sekolah_id, function(data, status){
+            for (var d in data) {
+                var option = document.createElement('option')
+                option.value = data[d]['id']
+                option.selected = rombel_id == data[d]['id']
+                option.innerHTML = data[d]['nama']
+                selectItems.appendChild(option)
+            }
+        });
+    }
+
+    $('.select2-show-search').select2({
+        minimumResultsForSearch: '',
+        width: '100%'
+    });
+</script>
+{% endblock %}

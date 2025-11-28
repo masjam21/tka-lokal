@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('dashboard.exam')}}">Ujian</a></li>
+<li class="breadcrumb-item1 active" aria-current="page">Data</li>
+{% endblock breadcrumb %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('exam.show')}}">Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="id" value="{{id}}"/>
+                        <div class="form-group">
+                            <label for="input-peserta" class="form-label">Peserta Ujian</label><br>
+                            {# <input id="checkall" type="checkbox">Select All<br> #}
+                            <div class="accordion accordion-flush" id="accordionFlushSiswaInRombel">
+                                {% for i in rombel_list %}
+                                <input id="{{i.id}}" name="select-rombel" type="checkbox">Pilih Semua Siswa di Kelas {{ i.tingkat_pendidikan }} - Rombel {{ i.nama }}<br>
+                                {# <div class="accordion-item">
+                                    <h2 class="accordion-header" id="flush-heading-{{i.id}}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                            data-bs-target="#flush-collapse-{{i.id}}" aria-expanded="false"
+                                            aria-controls="flush-collapse-{{i.id}}">
+                                            Kelas {{i.tingkat_pendidikan}} - Rombel {{i.nama}}
+                                        </button>
+                                    </h2>
+                                    <div id="flush-collapse-{{i.id}}" class="accordion-collapse collapse"
+                                        aria-labelledby="flush-heading-{{i.id}}"
+                                        data-bs-parent="#accordionFlushSiswaInRombel">
+                                        {% for j in student_list %}
+                                        {% if j.rombongan_belajar_id == i.id %}
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="peserta"
+                                                id="inlineCheckbox-{{j.id}}" value="{{j.id}}" {{ "checked" if
+                                                j.id in form.peserta else '' }}>
+                                            <label class="form-check-label"
+                                                for="inlineCheckbox-{{j.id}}">{{j.username}} | {{j.nama}}</label>
+                                        </div>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div> #}
+                                <select id="input-peserta" name="peserta" class="form-control select2-show-search form-select" data-placeholder="Pilih . ." multiple>
+                                    {% for j in student_list %}
+                                        {% if j.rombongan_belajar_id == i.id %}
+                                            <option value="{{j.id}}" class="{{i.id}}" {{ 'selected' if j.id in form.peserta else '' }}>Kelas {{ i.tingkat_pendidikan }} | Rombel {{ i.nama }} - {{j.username}} | {{j.nama}}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                {% endfor %}
+                            </div>
+                            {# <select id="input-peserta" name="peserta" class="form-control select2-show-search form-select" data-placeholder="Pilih . ." multiple>
+                                {% for i in student_list %}
+                                <option value="{{i.id}}" {{ 'selected' if i.id in form.peserta else '' }}>{{i.rombongan_belajar.nama}} | {{i.username}} | {{i.nama}}</option>
+                                {% endfor %}
+                            </select> #}
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    $(document).ready(function() {
+        $('.select2-show-search').select2({
+            minimumResultsForSearch: '',
+            width: '100%'
+        });
+
+        // $('#checkall').click(function() {
+        //     if ($('#checkall').is(':checked')) {
+        //         $("#input-peserta > option").prop("selected", true);
+        //         $("#input-peserta").trigger("change");
+        //     } else {
+        //         $("#input-peserta > option").prop("selected", false);
+        //         $("#input-peserta").trigger("change");
+        //     }
+        // });
+
+        let listRombel = document.querySelectorAll('input[name="select-rombel"]');
+
+        listRombel.forEach(function(rombel) {
+            rombel.addEventListener('click', function() {
+                let rombelId = this.getAttribute('id');
+
+                // let selectedItems = document.querySelectorAll('option[class="'+rombelId+'"]');
+                let selectedItems = $('option[class="'+rombelId+'"]');
+                for (var i = selectedItems.length - 1; i >= 0; i--) {
+                    if ($('input[name="select-rombel"]').is(':checked')) {
+                        $('option[class="'+rombelId+'"]').prop("selected", true);
+                        $('option[class="'+rombelId+'"]').trigger("change");
+                    } else if ($('input[name="select-rombel"]').is('')) {
+                        $('option[class="'+rombelId+'"]').prop("selected", false);
+                        $('option[class="'+rombelId+'"]').trigger("change");
+                    } else {
+                        $('option[class="'+rombelId+'"]').prop("selected", false);
+                        $('option[class="'+rombelId+'"]').trigger("change");
+                    }
+                    // else {
+                    //     $('option[class="'+rombelId+'"]').prop("selected", false);
+                    //     $('option[class="'+rombelId+'"]').trigger("change");
+                    // }
+                    // if ($('option[class="'+rombelId+'"]').is(':checked')) {                        
+                    // } else {
+                    //     $('option[class="'+rombelId+'"]').prop("selected", false);
+                    //     $('option[class="'+rombelId+'"]').trigger("change");
+                    // }
+                 }
+            });
+        });
+
+        if ($('.select2-show-search option:selected').length == $('.select2-show-search option').length) {
+            $('#checkall').prop("checked", true);
+        }
+    });
+</script>
+{% endblock script_custom %}
+

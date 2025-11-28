@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('dashboard.exam')}}">Ujian</a></li>
+<li class="breadcrumb-item1 active" aria-current="page">Data</li>
+{% endblock breadcrumb %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('exam.show')}}">Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-6 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="id" value="{{id}}"/>
+                        <div class="form-group">
+                            <label for="input-code" class="form-label">Nama Ujian</label>
+                            <input name="nama" type="text" class="form-control" id="input-code" value="{{form.nama}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputLesson" class="form-label">Pelajaran Diujikan</label>
+                            <select id="inputLesson" name="pelajaran" class="form-control select2-show-search form-select" data-placeholder="Pilih . ." multiple>
+                                {% for i in lesson_list %}
+                                <option value="{{i.id}}" {{ 'selected' if i.id in form.pelajaran else '' }}>{{i.kode}} | {{i.nama}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    $('.select2-show-search').select2({
+        minimumResultsForSearch: '',
+        width: '100%'
+    });
+</script>
+{% endblock script_custom %}
+

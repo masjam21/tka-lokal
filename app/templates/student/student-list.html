@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">Peserta</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">Peserta</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daftar Peserta Ujian</h3>
+                <div class="card-options">
+                    {# <a href="{{url_for('student.add')}}?school={{ args.get('school','') }}" class="btn btn-primary btn-sm"><i class="zmdi zmdi-plus me-2"></i>Tambah</a> #}
+                    {# <a href="{{url_for('student.import_')}}" class="btn btn-primary btn-sm ms-2"><i class="zmdi zmdi-upload me-2"></i>Import</a> #}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class=" row mb-4">
+                    <label for="input-sekolah" class="col-md-3 col-xl-2 form-label">Filter Sekolah:</label>
+                    <div class="col-md-9 col-xl-5">
+                        <select id="input-sekolah" class="form-control form-select select2-show-search" data-bs-placeholder="Pilih Sekolah" onchange="window.location='{{url_for('student.show')}}?school='+this.options[this.selectedIndex].value">
+                            <option value="" >Pilih Sekolah . .</option>
+                            {% for i in school_list %}
+                            <option value="{{i.id}}" {{'selected' if args.get('school','') == i.id else ''}}>{{i.nama}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap border-bottom" id="basic-datatable">
+                        <thead>
+                            <tr>
+                                <th class="wd-10p border-bottom-0">No</th>
+                                <th class="wd-15p border-bottom-0">Nomor Peserta</th>
+                                <th class="wd-15p border-bottom-0">Nama</th>
+                                <th class="wd-15p border-bottom-0">Kelas</th>
+                                <th class="wd-15p border-bottom-0">Sekolah</th>
+                                <th class="wd-20p border-bottom-0">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in student_list %}
+                            <tr>
+                                <td>{{loop.index}}</td>
+                                <td>{{i.username}}</td>
+                                <td>{{i.nama}}</td>
+                                <td>{{i.rombongan_belajar.nama}}</td>
+                                <td>{{i.sekolah.nama}}</td>
+                                <td>
+                                    {# <a href="{{url_for('student.edit', student_id=i.id)}}" class="btn btn-sm btn-primary"><i class="mdi mdi-pencil me-1"></i>Edit</a> #}
+                                    {# <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin?') == true) location.href='{{url_for('student.delete', student_id=i.id)}}'" class="btn btn-sm btn-danger ms-1"><i class="mdi mdi-delete me-1"></i>Hapus</a> #}
+                                    <a href="{{url_for('student.detail', student_id=i.id)}}" class="btn btn-success btn-sm">Detail</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATA TABLE JS-->
+<script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.bootstrap5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/pdfmake.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/vfs_fonts.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    $(document).ready(()=>{
+        var table = $('#basic-datatable').DataTable({
+            language: {
+                searchPlaceholder: 'Search...',
+                sSearch: '',
+            },
+        });
+        $('.select2-show-search').select2({
+            minimumResultsForSearch: '',
+            width: '100%'
+        });
+    })
+</script>
+{% endblock script_custom %}
+

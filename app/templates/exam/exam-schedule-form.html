@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page"><a href={{url_for('exam.show')}}>Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page"><a href={{url_for('exam.schedule.show', exam_id=exam.id)}}>Jadwal Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-6 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="id" value="{{id}}"/>
+                        <div class="form-group">
+                            <label for="inputLesson" class="form-label">Pelajaran Diujikan</label>
+                            <select id="inputLesson" name="pelajaran" class="form-control select2-show-search form-select" data-placeholder="Pilih . .">
+                                <option value="">pilih . . </option>
+                                {% for i in lesson_list %}
+                                <option value="{{i.pelajaran.id}}" {{ 'selected' if i.pelajaran.id == form.pelajaran else '' }}>{{i.pelajaran.kode}} | {{i.pelajaran.nama}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-sesi" class="form-label">Sesi Ujian</label>
+                            <input name="sesi" type="text" class="form-control" id="input-sesi" value="{{form.sesi}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-date" class="form-label">Tanggal & Waktu Ujian</label>
+                            <div class="input-group">
+                                <div class="input-group-text">
+                                    <i class="fa fa-calendar tx-16 lh-0 op-6"></i>
+                                </div>
+                                <input id="input-date" name="tanggal" class="form-control fc-datepicker" placeholder="MM/DD/YYYY" type="text" value="{{form.tanggal}}">
+                            </div>
+                            <div class="input-group mt-1">
+                                <div class="input-group-text">
+                                    <i class="fa fa-clock-o tx-16 lh-0 op-6"></i>
+                                </div>
+                                <input id="input-time" name="waktu" class="form-control" placeholder="Set time" type="text" value="{{form.waktu}}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-duration" class="form-label">Durasi Ujian (menit)</label>
+                            <input id="input-duration" name="durasi" type="number" class="form-control" placeholder="durasi dalam menit" type="text" value="{{form.durasi}}">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+<!-- DATEPICKER JS -->
+<script src="{{url_for('static', filename='plugins/date-picker/date-picker.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/date-picker/jquery-ui.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/input-mask/jquery.maskedinput.js')}}"></script>
+
+<!-- TIMEPICKER JS -->
+<script src="{{url_for('static', filename='plugins/time-picker/jquery.timepicker.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/time-picker/toggles.min.js')}}"></script>
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    $('#input-date').datepicker({
+        showOtherMonths: true,
+        selectOtherMonths: true
+    });
+    
+    $('#input-time').timepicker({
+        timeFormat: 'H:i',
+        minTime: '06:00',
+        maxTime: '17:00',
+        defaultTime: '10:00',
+        startTime: '06:00',
+    });
+
+    $('.select2-show-search').select2({
+        minimumResultsForSearch: '',
+        width: '100%'
+    });
+</script>
+{% endblock script_custom %}
+
