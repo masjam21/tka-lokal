@@ -1,12 +1,11 @@
 from logging.config import dictConfig
-
 import babel
-from flask import Flask, redirect, url_for
-from flask_login import LoginManager, current_user
+# GABUNGKAN import flask dan flask_login di sini untuk menghindari duplikasi
+from flask import Flask, redirect, url_for, session, flash
+from flask_login import LoginManager, current_user, logout_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-
 
 __version__ = "0.1.0"
 
@@ -14,7 +13,6 @@ db = SQLAlchemy()
 migrate = Migrate(compare_type=True)
 login_manager = LoginManager()
 csrf = CSRFProtect()
-
 
 def create_app():
     app = Flask(
@@ -55,6 +53,27 @@ def create_app():
     csrf.init_app(app)
 
     login_manager.login_view = "auth.login"
+    
+    # --- SINGLE SESSION CHECK ---
+    @app.before_request
+    def check_user_session():
+        # Pastikan user sudah login dan role-nya peserta didik
+        if current_user.is_authenticated and getattr(current_user, 'role', '') == 'peserta_didik':
+            # Ambil token dari session browser
+            browser_token = session.get('session_token')
+            
+            # Ambil token dari database (current_user otomatis refresh dari DB via user_loader)
+            db_token = getattr(current_user, 'session_token', None)
+
+            # Logika validasi:
+            # 1. Jika token di DB kosong (berarti di-logout paksa admin)
+            # 2. Jika token browser berbeda dengan DB (berarti login di tempat lain)
+            if db_token is None or browser_token != db_token:
+                logout_user()
+                session.clear()
+                flash("Sesi anda telah berakhir atau anda login di perangkat lain.", "error")
+                return redirect(url_for('auth.login'))
+    # ----------------------------
 
     @app.route("/", methods=["GET"])
     def index():
