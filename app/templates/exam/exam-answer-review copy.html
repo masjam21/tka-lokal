@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block style %}
+<style>
+    #container-answer {
+        height: 100%;
+        width: 100%;
+        display: flex;
+    }
+
+    #number {
+        width: 5%;
+    }
+
+    #answer {
+        width: 90%;
+    }
+</style>
+{% endblock style %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">Jawaban</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page">{#<a href="{{url_for('lesson.show')}}"></a>#}Pelajaran</li>
+            {# <li class="breadcrumb-item1 active" aria-current="page">{{lesson.kode}}</li> #}
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                {#<h3 class="card-title">Daftar Jawaban "{{lesson.nama}}"</h3>#}
+                <h3 class="card-title">Daftar Jawaban</h3>
+                <div class="card-options">
+                    {# <a href="{{url_for('lesson.question.add', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm"><i class="zmdi zmdi-plus me-2"></i>Tambah</a>
+                    <a href="{{url_for('lesson.question.import_', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm ms-2"><i class="zmdi zmdi-upload me-2"></i>Import</a> #}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap border-bottom" id="basic-datatable">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0">No</th>
+                                <th class="border-bottom-0" style="white-space: normal; min-width: 100px;">Pertanyaan</th>
+                                <th class="border-bottom-0">Berikan Nilai</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for i in jawaban_list %}
+                            <tr>
+                                <td>{{i.nomor if i.nomor is not none else ''}}</td>
+                                <td style="white-space: normal; min-width: 100px;">
+                                    <ul>
+                                        <li><b>Pertanyaan:</b></li>
+                                        <li>{{i.pertanyaan|safe}}</li>
+                                        <li><br></li>
+
+                                        {# --- TAMPILAN PILIHAN GANDA & CEKLIS --- #}
+                                        {% if i.tipe_pertanyaan in ['pilihan_ganda', 'ceklis'] %}
+                                            <li><b>Pilihan:</b></li>
+                                            {% for j in ['a','b','c','d'][:i.jumlah_pilihan] %}
+                                            <li>
+                                                <div style="display: flex;">
+                                                    <div style="width: 30px; font-weight: bold;">
+                                                        {{j.upper()}}.
+                                                    </div>
+                                                    <div>
+                                                        {{i['pilihan_{}'.format(j)]|safe}}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                        
+                                        {# --- TAMPILAN BENAR/SALAH & SESUAI/TIDAK --- #}
+                                        {% elif i.tipe_pertanyaan in ['benar_salah', 'sesuai_tidak_sesuai'] %}
+                                            <li><b>Pernyataan & Jawaban:</b></li>
+                                            <li>
+                                                <table class="table table-bordered table-sm mt-2" style="width: 100%;">
+                                                    <thead>
+                                                        <tr class="bg-light">
+                                                            <th>Pernyataan</th>
+                                                            <th class="text-center" width="20%">Jawaban Siswa</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for idx in range(3) %}
+                                                            {% set pernyataan = i['pernyataan_{}'.format(idx+1)] %}
+                                                            {% if pernyataan %}
+                                                                <tr>
+                                                                    <td>{{ pernyataan|safe }}</td>
+                                                                    <td class="text-center">
+                                                                        {% set ans = i.jawaban_siswa_list[idx] if i.jawaban_siswa_list|length > idx else '-' %}
+                                                                        {% if i.tipe_pertanyaan == 'benar_salah' %}
+                                                                            {{ 'Benar' if ans == 'A' else ('Salah' if ans == 'B' else '-') }}
+                                                                        {% else %}
+                                                                            {{ 'Sesuai' if ans == 'A' else ('Tidak Sesuai' if ans == 'B' else '-') }}
+                                                                        {% endif %}
+                                                                    </td>
+                                                                </tr>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </li>
+                                        {% endif %}
+
+                                        <li><br></li>
+                                        
+                                        {# Tampilkan Kunci & Jawaban Siswa (Raw) #}
+                                        {% if i.tipe_pertanyaan != 'uraian' %}
+                                            <li><b>Kunci Jawaban: {{i.jawaban_benar}}</b></li>
+                                            {% if i.tipe_pertanyaan not in ['benar_salah', 'sesuai_tidak_sesuai'] %}
+                                                <li><b>Jawaban Siswa: {{i.jawaban_siswa if i.jawaban_siswa else 'Tidak menjawab.'}}</b></li>
+                                            {% endif %}
+                                        {% else %}
+                                            <li><b>Jawaban Uraian Siswa:</b><br>{{i.jawaban_siswa}}</li>
+                                        {% endif %}
+                                        
+                                        <li><b>Status Nilai: 
+                                            {% if i.nilai %}
+                                                <span class="badge bg-success">Benar</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Salah</span>
+                                            {% endif %}
+                                        </b></li>
+                                    <ul>
+                                </td>
+                                <td>
+                                    {% if i.tipe_pertanyaan == 'uraian' %}
+                                    <form method="POST" action="{{url_for('doing.uraian', ujian_peserta_id=ujian_peserta_id)}}">
+                                        <div class="form-group">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="nomor" value="{{i.nomor if i.nomor is not none else ''}}" readonly>
+                                            <label for="input-nilai-uraian" class="form-label">Nilai Uraian</label>
+                                            <input name="nilai" type="text" class="form-control" id="input-nilai-uraian" value="{{i.nilai if i.nilai else ''}}">
+                                        </div>
+                                        <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <!-- <tbody>
+                            {% for i in jawaban_list %}
+                            <tr>
+                                <td>{{i.nomor if i.nomor is not none else ''}}</td>
+                                <td style="white-space: normal; min-width: 100px;">
+                                    <ul>
+                                        <li><b>Pertanyaan:</b></li>
+                                        <li>{{i.pertanyaan|safe}}</li>
+                                        <li><br></li>
+                                        {% if i.tipe_pertanyaan != 'uraian' %}
+                                            <li><b>Pilihan:</b></li>
+                                            {# for j in ['a','b','c','d','e'][:i.jumlah_pilihan] #}
+                                            {% for j in ['a','b','c','d'][:i.jumlah_pilihan] %}
+                                            <li>
+                                                <div id="container-answer">
+                                                    <div id="number">
+                                                        {{j.upper()}}.
+                                                    </div>
+                                                    <div id="answer">
+                                                        {{i['pilihan_{}'.format(j)]|safe}}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                            <li><br></li>
+                                            <li><b>Jawaban Benar: {{i.jawaban_benar}}</b></li>
+                                            <li><br></li>
+                                            <li><b>Jawaban Siswa: {{i.jawaban_siswa if i.jawaban_siswa else 'Tidak menjawab.'}}</b></li>
+                                        {% else %}
+                                            <li><br></li>
+                                            <li><br>Jawaban Siswa : {{i.jawaban_siswa}}</li>
+                                        {% endif %}
+                                    <ul>
+                                </td>
+                                <td>
+                                    {% if i.tipe_pertanyaan != 'pilihan_ganda' %}
+                                    <form method="POST" action="{{url_for('doing.uraian', ujian_peserta_id=ujian_peserta_id)}}">
+                                        <div class="form-group">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="nomor" value="{{i.nomor if i.nomor is not none else ''}}" readonly>
+                                            <label for="input-nilai-uraian" class="form-label">Nilai Uraian</label>
+                                            <input name="nilai" type="text" class="form-control" id="input-nilai-uraian" value="{{i.nilai if i.nilai else ''}}">
+                                        </div>
+                                        <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody> -->
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATA TABLE JS-->
+<script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.bootstrap5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/pdfmake.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/vfs_fonts.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    var table = $('#basic-datatable').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+    });
+</script>
+{% endblock script_custom %}

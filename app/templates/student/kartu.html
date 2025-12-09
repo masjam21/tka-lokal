@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">Kartu Peserta</h1>
+</div>
+{% endblock header %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <div class="text-center mb-3">
+                <h4>KARTU PESERTA</h4>
+                <small>{{student.sekolah.nama}}</small>
+            </div>
+            <div class="mb-2">
+                <strong>Nomor Peserta (NISN):</strong>
+                <div>{{student.username}}</div>
+            </div>
+            <div class="mb-2">
+                <strong>Nama:</strong>
+                <div class="student-name">{{student.nama}}</div>
+            </div>
+            <div class="mb-2">
+                <strong>Kelas / Rombel:</strong>
+                <div>{{student.rombongan_belajar.nama if student.rombongan_belajar is not none else '-'}}</div>
+            </div>
+            <div class="mb-2">
+                <strong>Tempat, Tanggal Lahir:</strong>
+                <div>{{student.tempat_lahir if student.tempat_lahir else '-' }}, {{student.tanggal_lahir.strftime('%d-%m-%Y') if student.tanggal_lahir else '-' }}</div>
+            </div>
+            <div class="text-center mt-4">
+                <button class="btn btn-primary" onclick="window.print();">Cetak</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block script_custom %}
+<style>
+@media print {
+    body * { visibility: hidden; }
+    .card, .card * { visibility: visible; }
+    .card { position: absolute; left: 0; top: 0; width: 100%; }
+}
+/* Nama peserta untuk single-card view: izinkan membungkus agar tidak terpotong */
+.student-name {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    line-height: 1.05;
+    font-size: clamp(7pt, 1.6vw, 11pt);
+}
+
+@media print {
+    .student-name { font-size: clamp(6pt, 1.4vw, 10pt); }
+}
+</style>
+{% endblock script_custom %}

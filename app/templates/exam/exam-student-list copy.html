@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">Peserta</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page"><a href={{url_for('exam.show')}}>Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page"><a href={{url_for('exam.schedule.show', exam_id=exam_id)}}>Jadwal Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">Daftar Peserta</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+                <div class="card-header">
+                <h3 class="card-title">Daftar Peserta Ujian {{exam.ujian}} Mapel {{exam.mapel}} Sesi {{exam.sesi}}</h3>
+                <div class="card-options">
+                    {% if current_user.role == 'proktor' %}
+                    <a href="{{url_for('exam.schedule.student_add', exam_id=exam_id, schedule_id=schedule_id, lesson_id=lesson_id)}}?school={{ args.get('school','') }}" class="btn btn-primary btn-sm">Edit</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class=" row mb-4">
+                    <label for="input-sekolah" class="col-md-3 col-xl-2 form-label">Filter Sekolah:</label>
+                    <div class="col-md-9 col-xl-5">
+                        <select name="pemisah" id="input-sekolah" class="form-control form-select select2-show-search" data-bs-placeholder="Pilih Sekolah" onchange="window.location='{{url_for('student.show')}}?school='+this.options[this.selectedIndex].value">
+                            <option value="" >Pilih Sekolah . .</option>
+                            {% for i in school_list %}
+                            <option value="{{i.id}}" {{'selected' if args.get('school','') == i.id else ''}}>{{i.nama}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap border-bottom" id="basic-datatable">
+                        <thead>
+                            <tr>
+                                <th class="wd-10p border-bottom-0">No</th>
+                                <th class="wd-15p border-bottom-0">Nomor Peserta</th>
+                                <th class="wd-15p border-bottom-0">Nama</th>
+                                <th class="wd-15p border-bottom-0">Kelas</th>
+                                <th class="wd-15p border-bottom-0">Sekolah</th>
+                                <th class="wd-15p border-bottom-0">Status</th>
+                                <th class="wd-20p border-bottom-0">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in student_list %}
+                            <tr>
+                                <td>{{loop.index}}</td>
+                                <td>{{i.user.username}}</td>
+                                <td>{{i.user.nama}}</td>
+                                <td>{{i.user.rombongan_belajar.nama}}</td>
+                                <td>{{i.user.sekolah.nama}}</td>
+                                <td>{{i.status}}</td>
+                                <td>
+                                    <div class="d-grid gap-2">
+                                        {# --- TOMBOL 1: SELESAI UJIAN --- #}
+                                        {% if i.status == 'BERJALAN' %}
+                                        <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk mengakhiri ujian?') == true) location.href = '{{url_for('exam.schedule.end', exam_id=i.ujian_id, schedule_id=i.jadwal_ujian_id, user_id=i.user_id, lesson_id=lesson_id)}}'" class="btn btn-sm btn-danger">Selesai Ujian</a>
+                                        {% endif %}
+                                        
+                                        {# --- TOMBOL 2: RESET STATUS UJIAN --- #}
+                                        {% if i.waktu_mulai is not none %}
+                                        <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk mereset status ujian?') == true) location.href = '{{url_for('exam.schedule.reset', exam_id=i.ujian_id, schedule_id=i.jadwal_ujian_id, user_id=i.user_id, lesson_id=lesson_id)}}'" class="btn btn-sm btn-warning">Reset Status</a>
+                                        {% endif %}
+
+                                        {# --- TOMBOL 3: RESET LOGIN (FORCE LOGOUT) --- #}
+                                        {% if i.user.session_token %}
+                                            <a href="javascript:void(0)" 
+                                               onclick="if (confirm('Keluarkan siswa ini dari aplikasi?') == true) location.href='{{url_for('student.force_logout', student_id=i.user.id)}}?next=' + encodeURIComponent(window.location.href)" 
+                                               class="btn btn-sm btn-dark">
+                                               <i class="fa fa-power-off"></i> Reset Login
+                                            </a>
+                                            <div class="text-center"><span class="badge bg-success">Online</span></div>
+                                        {% else %}
+                                            <div class="text-center"><span class="badge bg-secondary">Offline</span></div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <!-- <td>
+                                    {% if i.status == 'BERJALAN' %}
+                                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk mengakhiri ujian?') == true) location.href = '{{url_for('exam.schedule.end', exam_id=i.ujian_id, schedule_id=i.jadwal_ujian_id, user_id=i.user_id, lesson_id=lesson_id)}}'" class="btn btn-sm btn-danger">Selesai</a>
+                                    {% endif %}
+                                    {% if i.waktu_mulai is not none %}
+                                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk mereset ujian?') == true) location.href = '{{url_for('exam.schedule.reset', exam_id=i.ujian_id, schedule_id=i.jadwal_ujian_id, user_id=i.user_id, lesson_id=lesson_id)}}'" class="btn btn-sm btn-warning">Reset</a>
+                                    {% endif %}
+                                </td> -->
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATA TABLE JS-->
+<script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.bootstrap5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/pdfmake.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/vfs_fonts.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    var table = $('#basic-datatable').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+    });
+
+    $('.select2-show-search').select2({
+        minimumResultsForSearch: '',
+        width: '100%'
+    });
+</script>
+{% endblock script_custom %}
+

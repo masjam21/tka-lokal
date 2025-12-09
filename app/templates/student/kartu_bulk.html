@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <title>Kartu Peserta - Cetak</title>
+    <style>
+        body {
+            font: 12pt "Tahoma", sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fafafa;
+        }
+        * { box-sizing: border-box; }
+        .page { width: 210mm; min-height: 297mm; margin: 10mm auto; background: #fff; position: relative; padding: 12mm; }
+        .content-area { position: relative; z-index: 2; }
+        .header-table { width: 100%; border: none; margin-bottom: 8px; }
+        .header-table td { vertical-align: middle; }
+
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 6mm; align-items: stretch; }
+        .card {
+            border: 1px solid #333;
+            padding: 6mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: calc((297mm - 24mm - (6mm * 4)) / 5);
+        }
+
+        .kop { display:flex; align-items: center; gap: 8px; }
+        .kop img { height: 50px; }
+        .kop .title { flex: 1; text-align: center; font-weight: bold; }
+
+        .info { margin-top:6px; font-size: 11pt; }
+        .info div { margin-bottom: 4px; }
+
+        /* Nama peserta: jangan terpotong, biarkan membungkus */
+        .student-name {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere;
+            hyphens: auto;
+            display: inline-block;
+            max-width: 100%;
+            line-height: 1.05;
+            font-size: clamp(7pt, 1.4vw, 10pt);
+        }
+
+        @media print {
+            .student-name { font-size: clamp(6pt, 1.2vw, 9pt); }
+        }
+
+        .signature { text-align:center; font-size: 10pt; }
+
+        @page { size: A4; margin: 5mm 6mm 0mm 5mm; }
+        @media print {
+            html, body { width: 210mm; height: 297mm; }
+            .page { margin: 0; box-shadow: initial; background: initial; page-break-after: always; }
+            .card { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="book">
+    {% for page in pages %}
+        <div class="page">
+            <div class="content-area">
+                <table class="header-table">
+                    <tr>
+                        <td style="width: 10%; text-align: right; padding-right: 10px;"><img src="{{ url_for('static', filename='images/logo_gk.png') }}" height="80px" alt="Logo" /></td>
+                        <td class="text-center" style="width: 80%">
+                            <span style="font-size: large">PEMERINTAH KABUPATEN GUNUNGKIDUL</span><br />
+                            <span style="font-size: large">DINAS PENDIDIKAN</span><br />
+                            <span style="font-size: medium"><strong>Kartu Peserta Ujian</strong></span>
+                        </td>
+                        <td style="width: 10%"></td>
+                    </tr>
+                </table>
+                <hr style="border: 1px solid #000; margin: 4px 0" />
+
+                <div class="cards-grid">
+                    {% for student in page %}
+                    <div class="card">
+                        <div>
+                            <div class="kop">
+                                <div><img src="{{ url_for('static', filename='images/logo_gk.png') }}" alt="logo"></div>
+                                <div class="title">
+                                    <div style="font-size:12px">{{ student.sekolah.nama if student.sekolah else '' }}</div>
+                                    <div style="font-size:10px">Kartu Peserta Ujian</div>
+                                </div>
+                            </div>
+
+                            <div class="info">
+                                <div><strong>Nama Siswa:</strong> <span class="student-name">{{ student.nama }}</span></div>
+                                <div><strong>Tanggal Lahir:</strong> {{ student.tanggal_lahir.strftime('%d-%m-%Y') if student.tanggal_lahir else '-' }}</div>
+                                <div><strong>Username:</strong> {{ student.username }}</div>
+                                <div><strong>Password:</strong>
+                                    {% if include_password and student.raw_password is defined and student.raw_password %}
+                                        {{ student.raw_password }}
+                                    {% else %}
+                                        <em>(tidak tersedia)</em>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="signature">
+                            Mengetahui,<br />
+                            <div style="height:28px"></div>
+                            <div><strong>{{ student.sekolah.kepala_sekolah if student.sekolah and student.sekolah.kepala_sekolah else 'Kepala Sekolah' }}</strong></div>
+                            <div style="font-size:10px">NIP: {{ student.sekolah.nip_kepala_sekolah if student.sekolah and student.sekolah.nip_kepala_sekolah else '-' }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+</body>
+</html>

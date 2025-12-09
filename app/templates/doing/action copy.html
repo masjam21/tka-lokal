@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+{% endblock breadcrumb %}
+
+{% block style %}
+<style>
+    /* Container Jawaban */
+    #container-answer {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: flex-start; /* Ubah ke flex-start agar nomor tetap di atas jika teks panjang */
+        padding-top: 5px;
+    }
+    #number {
+        width: 40px; 
+        min-width: 40px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        font-weight: bold;
+    }
+    #answer {
+        flex-grow: 1;
+        word-break: break-word; /* Mencegah teks keluar layar di HP */
+    }
+
+    /* Tabel Benar/Salah Responsif */
+    .table th, .table td {
+        vertical-align: middle !important;
+        font-size: 0.9rem; /* Sedikit kecilkan font di mobile */
+    }
+    /* Input Radio Scale */
+    input[type=radio], input[type=checkbox] {
+        transform: scale(1.3);
+        margin-right: 8px;
+    }
+
+    /* Hover & Pointer */
+    .list-group-item {
+        cursor: pointer;
+        padding: 12px 15px; /* Perbesar padding untuk sentuhan jari */
+    }
+    .list-group-item:hover, .list-group-item.active {
+        background-color: #f0f2f5;
+        color: #000; /* Pastikan teks tetap terbaca saat aktif */
+        border-color: #dee2e6;
+    }
+    .list-group-item.active {
+        background-color: #e7f1ff;
+        border-color: #0d6efd;
+    }
+
+    /* Sticky Header Mobile Specific */
+    .mobile-sticky-header {
+        position: sticky;
+        top: 0; /* Sesuaikan jika ada navbar lain, misal top: 60px */
+        z-index: 999;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 10px 15px;
+        margin-left: -15px; /* Kompensasi margin container bawaan template */
+        margin-right: -15px;
+        margin-bottom: 20px;
+    }
+
+    /* Layout Tombol Footer di Mobile */
+    @media (max-width: 767.98px) {
+        .btn-nav-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .btn-prev, .btn-next {
+            flex: 1 0 45%; /* Lebar 50% kurang gap */
+        }
+        .btn-save-container {
+            flex: 1 0 100%; /* Lebar penuh */
+            order: -1; /* Taruh tombol simpan di atas prev/next atau ubah ke 3 untuk di bawah */
+            margin-bottom: 10px;
+        }
+        .btn-save {
+            width: 100%;
+        }
+        /* Sembunyikan kolom kanan (daftar soal) default di mobile */
+        .desktop-nav-panel {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# --- MOBILE STICKY HEADER (Hanya muncul di layar kecil) --- #}
+<div class="d-block d-md-none mobile-sticky-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted small">No.</span>
+            <span class="fw-bold fs-18">{{jawaban.nomor}}</span>
+        </div>
+        
+        <div class="text-center">
+            <span id="countdown-mobile" class="badge bg-danger fs-14">--:--:--</span>
+        </div>
+
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSoal" aria-controls="offcanvasSoal">
+            <i class="fe fe-grid me-1"></i> Soal
+        </button>
+    </div>
+</div>
+{# ---------------------------------------------------------- #}
+
+<br class="d-none d-md-block"><br class="d-none d-md-block">
+
+<div class="row row-sm">
+    {# === KOLOM KIRI: SOAL === #}
+    <div class="col-md-8">
+        <div class="card">
+            {# Header Card Desktop (Disembunyikan di mobile karena sudah ada sticky header) #}
+            <div class="card-header d-none d-md-flex">
+                <h3 class="card-title">Soal No. {{jawaban.nomor}}</h3>
+                <div class="card-options">
+                    <span id="countdown" class="badge bg-primary fs-14"></span>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                {# Konten Pertanyaan #}
+                <div class="mb-4 fs-16" style="line-height: 1.6;">
+                    {{pertanyaan.pertanyaan|safe}}
+                </div>
+                 
+                {# ========================================== #}
+                {# 1. FORM UNTUK PILIHAN GANDA                #}
+                {# ========================================== #}
+                {% if pertanyaan.tipe_pertanyaan == 'pilihan_ganda' %}
+                    <form id="quiz-form-{{jawaban.nomor}}" class="pilgan-form" 
+                          data-url="{{ url_for('doing.answer', number=jawaban.nomor, opt='__OPT__') }}">
+                        
+                        <div class="list-group">
+                            {% for i in range(pertanyaan.jumlah_pilihan)%}
+                                {% set letter = ['A','B','C','D'][i] %}
+                                {% set key = ['a','b','c','d'][i] %}
+                                
+                                <label class="list-group-item list-group-item-action {{'active' if jawaban.jawaban == letter else ''}}">
+                                    <div id="container-answer">
+                                        <div id="number">
+                                            <input type="radio" name="opt" value="{{ letter }}" class="form-check-input" 
+                                                   {% if jawaban.jawaban == letter %}checked{% endif %}>
+                                            <span>{{ letter }}.</span> 
+                                        </div>
+                                        <div id="answer">
+                                            {{pertanyaan['pilihan_' + key]|safe}}
+                                        </div>
+                                    </div>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </form>
+
+                {# ========================================== #}
+                {# 2. FORM UNTUK CEKLIS                       #}
+                {# ========================================== #}
+                {% elif pertanyaan.tipe_pertanyaan == 'ceklis' %}
+                    <form method="post" action="{{ url_for('doing.answer_checklist', number=jawaban.nomor) }}" id="quiz-form-{{jawaban.nomor}}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="list-group">
+                            {% for i in range(pertanyaan.jumlah_pilihan)%}
+                            {% set letter = ['A','B','C','D'][i] %}
+                            {% set key = ['a','b','c','d'][i] %}
+                            <label class="list-group-item list-group-item-action">
+                                <div id="container-answer">
+                                    <div id="number">
+                                        <input type="checkbox" name="opt" value="{{ letter }}" class="form-check-input"
+                                            {% set jawaban_list = (jawaban.jawaban or '').split(',') %}
+                                            {% if letter in jawaban_list %} checked{% endif %}>
+                                        <span>{{ letter }}.</span>
+                                    </div>
+                                    <div id="answer">
+                                        {{pertanyaan['pilihan_' + key]|safe}}
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </form>
+                
+                {# ========================================== #}
+                {# 3. FORM UNTUK BENAR/SALAH & SESUAI/TIDAK   #}
+                {# ========================================== #}
+                {% elif pertanyaan.tipe_pertanyaan in ['benar_salah', 'sesuai_tidak_sesuai'] %}
+                    <form method="post" action="{{ url_for('doing.answer_benar_salah', number=jawaban.nomor) }}" id="quiz-form-{{jawaban.nomor}}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="table-responsive">
+                            {% set statements = [pertanyaan.pernyataan_1, pertanyaan.pernyataan_2, pertanyaan.pernyataan_3] %}
+                            {% set current_jawaban = (jawaban.jawaban or '').split(',') %}
+
+                            <table class="table table-bordered table-striped mb-0">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th class="align-middle">Pernyataan</th>
+                                        <th class="align-middle" style="width: 60px;">
+                                            <small>{{ 'Sesuai' if pertanyaan.tipe_pertanyaan == 'sesuai_tidak_sesuai' else 'Benar' }}</small>
+                                        </th>
+                                        <th class="align-middle" style="width: 60px;">
+                                            <small>{{ 'Tidak Sesuai' if pertanyaan.tipe_pertanyaan == 'sesuai_tidak_sesuai' else 'Salah' }}</small>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in statements %}
+                                        {% if s %}
+                                            {% set index = loop.index0 %}
+                                            {% set current_key = current_jawaban[index] if current_jawaban|length > index else '' %}
+                                            <tr>
+                                                <td class="align-middle">{{ s|safe }}</td>
+                                                <td class="text-center align-middle bg-white">
+                                                    <input class="form-check-input mx-auto" type="radio" name="answer_{{ index + 1 }}" value="A" {% if current_key == 'A' %}checked{% endif %} required>
+                                                </td>
+                                                <td class="text-center align-middle bg-white">
+                                                    <input class="form-check-input mx-auto" type="radio" name="answer_{{ index + 1 }}" value="B" {% if current_key == 'B' %}checked{% endif %} required>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                
+                {# ========================================== #}
+                {# 4. URAIAN                                  #}
+                {# ========================================== #}
+                {% elif pertanyaan.tipe_pertanyaan == 'uraian' %}
+                    <div class="alert alert-info">
+                        <i class="fe fe-info me-2"></i>Tipe soal uraian tidak dinilai otomatis.
+                    </div>
+                {% endif %}
+
+            </div>
+            
+            <div class="card-footer">
+                {# Navigasi Tombol (Mobile Friendly) #}
+                <div class="btn-nav-group">
+                    
+                    {# Tombol SEBELUMNYA #}
+                    <div class="btn-prev">
+                        <a href="{{url_for('doing.action', number=jawaban.nomor-1) if jawaban.nomor > 1 else jumlah_soal}}" class="btn btn-outline-primary w-100">
+                            <i class="fe fe-chevron-left me-1"></i> Prev
+                        </a>
+                    </div>
+
+                    {# Tombol SIMPAN #}
+                    <div class="btn-save-container text-center">
+                        {% if pertanyaan.tipe_pertanyaan in ['pilihan_ganda', 'ceklis', 'benar_salah', 'sesuai_tidak_sesuai'] %}
+                            <button type="submit" form="quiz-form-{{jawaban.nomor}}" class="btn btn-primary btn-save">
+                                <i class="fe fe-save me-2"></i>Simpan Jawaban
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    {# Tombol SELANJUTNYA #}
+                    <div class="btn-next text-end">
+                        <a href="{{url_for('doing.action', number=jawaban.nomor+1) if jawaban.nomor < jumlah_soal else url_for('doing.action', number=1)}}" class="btn btn-outline-primary w-100">
+                            Next <i class="fe fe-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {# === KOLOM KANAN: NAVIGASI SOAL (DESKTOP) === #}
+    <div class="col-md-4 desktop-nav-panel">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Navigasi Soal</h3>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    {% for i in answer_list %}
+                    <div class="col-3 col-sm-3 col-md-3 col-lg-2">
+                         <a href="{{url_for('doing.action', number=i.nomor)}}" 
+                            class="btn w-100 p-1 {{'btn-success' if i.jawaban is not none else 'btn-outline-secondary'}} {{'border-2 border-dark' if i.nomor == jawaban.nomor else ''}}">
+                            {{i.nomor}}
+                         </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-grid gap-2">
+                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin ingin mengakhiri ujian ini?') == true) location.href='{{url_for('doing.end')}}'" class="btn btn-danger">
+                        <i class="fe fe-check-square me-2"></i>Selesai Ujian
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# === OFFCANVAS: NAVIGASI SOAL (MOBILE) === #}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasSoal" aria-labelledby="offcanvasSoalLabel">
+  <div class="offcanvas-header bg-light">
+    <h5 class="offcanvas-title" id="offcanvasSoalLabel">Daftar Soal</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="row g-2 mb-4">
+        {% for i in answer_list %}
+        <div class="col-3">
+             <a href="{{url_for('doing.action', number=i.nomor)}}" 
+                class="btn w-100 p-2 {{'btn-success' if i.jawaban is not none else 'btn-outline-secondary'}} {{'border-3 border-dark' if i.nomor == jawaban.nomor else ''}}">
+                {{i.nomor}}
+             </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="d-grid gap-2 mt-auto">
+        <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin ingin mengakhiri ujian ini?') == true) location.href='{{url_for('doing.end')}}'" class="btn btn-danger btn-lg">
+            <i class="fe fe-check-square me-2"></i>Selesai Ujian
+        </a>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block script_custom %}
+<script>
+    const second = 1000;
+    const minute = second * 60;
+    const hour = minute * 60;
+    const day = hour * 24;
+
+    $( document ).ready(function() {
+        // --- LOGIKA PILIHAN GANDA ---
+        $('.pilgan-form').on('submit', function(e) {
+            e.preventDefault();
+            var selected = $(this).find('input[name="opt"]:checked').val();
+            var urlTemplate = $(this).data('url');
+            
+            if(selected) {
+                var finalUrl = urlTemplate.replace('__OPT__', selected);
+                window.location.href = finalUrl;
+            } else {
+                // Menggunakan SweetAlert jika ada, atau alert biasa
+                alert('Silakan pilih jawaban terlebih dahulu.');
+            }
+        });
+
+        // --- TIMER ---
+        var startDate = new Date('{{ujian_peserta.waktu_mulai}}')
+        var endDate = new Date(startDate.getTime() + ({{ujian_peserta.jadwal_ujian.durasi}} * 60000));
+        
+        function updateTimerDisplay(timeString) {
+            // Update timer desktop dan mobile
+            $('#countdown').html(timeString);
+            $('#countdown-mobile').html(timeString);
+        }
+
+        var countDownTimer = setInterval(() => {
+            var now = new Date().getTime();
+            var remainingTime = endDate - now;
+
+            daysLeft = Math.floor(remainingTime / day);
+            hoursLeft = Math.floor((remainingTime % day) / hour);
+            minutesLeft = Math.floor((remainingTime % hour) / minute);
+            secondsLeft = Math.floor((remainingTime % minute) / second);
+            
+            var timeString = `${('0' + hoursLeft).slice(-2)}:${('0' + minutesLeft).slice(-2)}:${('0' + secondsLeft).slice(-2)}`;
+            updateTimerDisplay(timeString);
+            
+            if (remainingTime < 0) {
+                clearInterval(countDownTimer);
+                updateTimerDisplay("00:00:00");
+                alert("Waktu Habis!");
+                location.href = "{{url_for('doing.end')}}" 
+            }
+        }, 1000);
+    });
+</script>
+{% endblock script_custom %}

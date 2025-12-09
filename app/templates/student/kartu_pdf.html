@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Kartu Peserta</title>
+    <style>
+        /* 1. Setting Halaman A4 (Presisi untuk 2x5 Kartu) */
+        @page {
+            size: A4;
+            margin: 10mm 10mm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            -webkit-print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+        }
+
+        /* 2. Ukuran Kartu (53mm x 92mm) */
+        .card {
+            width: 92mm; 
+            height: 53mm; 
+            border: 1px solid #000;
+            padding: 4px 8px;
+            box-sizing: border-box;
+            position: relative; /* Penting untuk posisi absolute watermark */
+            float: left;
+            margin-right: 4mm; 
+            margin-bottom: 4mm;
+            background-color: #fff;
+            overflow: hidden; 
+        }
+
+        .card:nth-child(2n) { margin-right: 0; }
+        .card:nth-child(10n) { page-break-after: always; margin-bottom: 0; }
+
+        /* --- WATERMARK SETUP --- */
+        .watermark {
+            position: absolute;
+            top: 55%;         /* Posisi vertikal (sedikit di bawah tengah agar tidak kena kop) */
+            left: 50%;        /* Posisi horizontal tengah */
+            transform: translate(-50%, -50%); /* Trik CSS agar benar-benar di tengah center point */
+            width: 25mm;      /* Ukuran logo watermark */
+            height: auto;
+            opacity: 0.15;    /* Transparansi 85% (Keterlihatan 15%) */
+            z-index: 0;       /* Posisi layer paling bawah */
+            pointer-events: none;
+            
+        }
+
+        /* --- Desain Elemen Dalam --- */
+
+        /* KOP SURAT */
+        .kop {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+            height: 36px;
+            position: relative;
+            z-index: 2; /* Layer di atas watermark */
+        }
+
+        .kop img {
+            height: 30px;
+            margin-right: 8px;
+        }
+
+        .kop-text {
+            text-align: center;
+            flex: 1;
+            line-height: 1.1;
+            color: #000;
+        }
+
+        .kop-text .instansi {
+            font-size: 7pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .kop-text .title {
+            font-size: 8pt;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+        
+        .kop-text .sekolah-nama {
+            font-size: 7pt;
+            font-weight: bold;
+            margin-top: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ISI DATA */
+        .content {
+            font-size: 8pt;
+            margin-top: 4px;
+            position: relative;
+            z-index: 2; 
+        }
+
+        table.info {
+            width: 65%;
+            border-collapse: collapse;
+        }
+
+        table.info td {
+            padding: 1px 0;
+            vertical-align: top;
+        }
+
+        table.info td:first-child {
+            width: 70px;
+            font-weight: normal;
+        }
+
+        table.info td:nth-child(2) {
+            width: 8px;
+            text-align: center;
+        }
+        
+        table.info td:nth-child(3) {
+            font-weight: bold;
+        }
+
+        /* Nama peserta: jangan terpotong di cetak, biarkan membungkus baris */
+        .student-name {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere;
+            hyphens: auto;
+            display: block; /* pastikan bisa membungkus */
+            max-width: 100%;
+            line-height: 1.05;
+            /* Auto-resize font: kecilkan pada viewport lebih sempit (print friendly) */
+            font-size: clamp(7pt, 1.6vw, 9pt);
+        }
+
+        /* Untuk print yang sangat padat, kurangi ukuran nama sedikit lagi */
+        @media print {
+            .student-name { font-size: clamp(6pt, 1.4vw, 8pt); }
+        }
+
+        .password-field {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 1px;
+            font-weight: 900 !important;
+        }
+
+        /* TANDA TANGAN */
+        .signature {
+            position: absolute;
+            bottom: 5px;
+            right: 8px;
+            font-size: 7pt;
+            text-align: center;
+            width: auto; 
+            min-width: 100px;
+            white-space: nowrap;
+            z-index: 2; /* Layer di atas watermark */
+        }
+
+        .signature .date { margin-bottom: 2px; }
+        .signature .jabatan { font-weight: bold; margin-bottom: 16px; }
+        .signature .nama { font-weight: bold; text-decoration: underline; display: block; margin-bottom: 1px; }
+        .signature .nip { display: block; }
+
+        .footer-time {
+            position: absolute;
+            bottom: 2px;
+            left: 4px;
+            font-size: 5pt;
+            color: #999;
+            font-style: italic;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% for student in students %}
+            <div class="card">
+                <img class="watermark" src="{{ url_for('static', filename='images/tutwuri.png') }}" alt="Watermark">
+
+                <div class="kop">
+                    <img src="{{ url_for('static', filename='images/logo_gk.png') }}" alt="Logo">
+                    <div class="kop-text">
+                        <div class="instansi">Pemerintah Kab. Gunungkidul</div>
+                        <div class="instansi">Dinas Pendidikan</div>
+                        <div class="title">KARTU PESERTA UJIAN</div>
+                        <div class="sekolah-nama">{{ student.sekolah.nama if student.sekolah else '' }}</div>
+                    </div>
+                </div>
+                
+                <div class="content">
+                    <table class="info">
+                        <tr>
+                            <td>Nama</td>
+                            <td>:</td>
+                            <td class="student-name">
+                                {{ student.nama }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>TTL</td>
+                            <td>:</td>
+                            <td style="white-space: nowrap">
+                                {{ student.tempat_lahir if student.tempat_lahir else '' }}{{ ', ' if student.tempat_lahir and student.tanggal_lahir else '' }}
+                                {{ student.tanggal_lahir.strftime('%d-%m-%Y') if student.tanggal_lahir else '-' }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Username</td>
+                            <td>:</td>
+                            <td>{{ student.username }}</td>
+                        </tr>
+                        <tr>
+                            <td>Password</td>
+                            <td>:</td>
+                            <td class="password-field">
+                                {% if student.tanggal_lahir %}
+                                    {{ student.tanggal_lahir.strftime('%d%m%Y') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="signature">
+                    <div class="date">Mengetahui,</div>
+                    <div class="jabatan">Kepala Sekolah</div>
+                    
+                    <div class="nama">
+                        {{ student.sekolah.kepala_sekolah if student.sekolah and student.sekolah.kepala_sekolah else '.............................' }}
+                    </div>
+                    <div class="nip">
+                        NIP. {{ student.sekolah.nip_kepala_sekolah if student.sekolah and student.sekolah.nip_kepala_sekolah else '-' }}
+                    </div>
+                </div>
+
+                <div class="footer-time">
+                    Dicetak: {{ waktu_cetak }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
