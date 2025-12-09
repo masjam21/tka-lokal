@@ -610,6 +610,8 @@ def end(exam_id, schedule_id, user_id, lesson_id):
         url_for("exam.schedule.student_list", exam_id=exam_id, schedule_id=schedule_id, lesson_id=lesson_id)
     )
 
+# modified by jamhari
+# reset ujian peserta tanpa mengurangi waktu ujian  
 @bp.route("/<exam_id>/student/<schedule_id>/reset/<user_id>/lesson/<lesson_id>", methods=["GET", "POST"])
 @login_required
 @role_required(roles=["proktor", "admin"])
@@ -650,3 +652,74 @@ def reset(exam_id, schedule_id, user_id, lesson_id):
     return redirect(
         url_for("exam.schedule.student_list", exam_id=exam_id, schedule_id=schedule_id, lesson_id=lesson_id)
     )
+
+
+# jika ingin mengurangi waktu ujian saat reset, gunakan kode di bawah ini sebagai pengganti kode di atas
+# modified  by jamhari 
+
+# @bp.route("/<exam_id>/student/<schedule_id>/reset/<user_id>/lesson/<lesson_id>", methods=["GET", "POST"])
+# @login_required
+# @role_required(roles=["proktor", "admin"])
+# def reset(exam_id, schedule_id, user_id, lesson_id):
+#     # 1. Ambil data peserta ujian
+#     ujian_peserta: UjianPeserta = UjianPeserta.query.filter(
+#         UjianPeserta.user_id == user_id,
+#         UjianPeserta.status.in_(["BERJALAN", "SELESAI", "BARU"]), # Tambahkan BARU untuk jaga-jaga
+#         UjianPeserta.ujian_id == exam_id,
+#         UjianPeserta.jadwal_ujian_id == schedule_id,
+#         # UjianPeserta.waktu_mulai != None, # Dihapus agar query lebih fleksibel, dicek di logic bawah
+#         or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
+#     ).first()
+
+#     if ujian_peserta is None:
+#         abort(404)
+
+#     # --- [MODIFIKASI MULAI] LOGIKA PENGURANGAN WAKTU ---
+#     if ujian_peserta.waktu_mulai is not None:
+#         # Ambil durasi total ujian dari JadwalUjian untuk referensi
+#         jadwal = JadwalUjian.query.filter(JadwalUjian.id == schedule_id).first()
+#         durasi_total_detik = jadwal.durasi * 60 if jadwal else 0
+        
+#         # Hitung berapa lama siswa sudah mengerjakan (Waktu Sekarang - Waktu Mulai)
+#         waktu_sekarang = datetime.datetime.now()
+#         delta_terpakai = waktu_sekarang - ujian_peserta.waktu_mulai
+#         detik_terpakai = delta_terpakai.total_seconds()
+
+#         # Tentukan sisa waktu sebelumnya
+#         # Jika sisa_waktu di DB masih None, berarti masih punya waktu full (durasi jadwal)
+#         sisa_sebelumnya = ujian_peserta.sisa_waktu if ujian_peserta.sisa_waktu is not None else durasi_total_detik
+        
+#         # Kurangi sisa waktu
+#         sisa_baru = sisa_sebelumnya - detik_terpakai
+        
+#         # Update ke database (Pastikan tidak minus)
+#         ujian_peserta.sisa_waktu = max(0, sisa_baru)
+#     # --- [MODIFIKASI SELESAI] ---
+
+#     ujian_peserta_id = ujian_peserta.id
+
+#     # Reset atribut lainnya
+#     ujian_peserta.hasil = None
+#     ujian_peserta.waktu_mulai = None # Waktu mulai dikosongkan agar timer client mulai menghitung dari sisa_waktu
+#     ujian_peserta.waktu_selesai = None
+#     ujian_peserta.updated_at = None
+#     ujian_peserta.status = "BARU" # Status dikembalikan ke BARU agar bisa login lagi
+
+#     # Simpan perubahan UjianPeserta
+#     db.session.commit()
+
+#     # Hapus jawaban (sesuai kode asli Anda)
+#     jawaban: Jawaban = Jawaban.query.filter(
+#         Jawaban.ujian_peserta_id == ujian_peserta_id
+#     ).all()
+    
+#     # Perbaikan loop delete agar lebih aman jika jawaban kosong
+#     if jawaban:
+#         for i in jawaban:
+#             i.deleted = 1
+#         db.session.commit()
+
+#     flash("Status ujian peserta telah direset dan waktu telah dikurangi.", "success")
+#     return redirect(
+#         url_for("exam.schedule.student_list", exam_id=exam_id, schedule_id=schedule_id, lesson_id=lesson_id)
+#     )

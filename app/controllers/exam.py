@@ -491,7 +491,7 @@ def student_list(exam_id):
 
     # modified by grey
     sql_identitas = text(
-        """select up.user_id, s.nama, s.alamat, s.kepala_sekolah, s.nip_kepala_sekolah, u.nama, u.username, u.nis, u.ayah, u.ibu, u.tempat_lahir, u.tanggal_lahir, truncate(sum(up.hasil), 2)
+        """select up.user_id, s.nama, s.alamat, s.kepala_sekolah, s.nip_kepala_sekolah, u.nama, u.username, u.nis, u.ayah, u.ibu, u.tempat_lahir, u.tanggal_lahir, round(sum(up.hasil), 2)
         from ujian_peserta up
         left join sekolah s on up.sekolah_id = s.id
         left join user u on up.user_id = u.id
@@ -503,7 +503,7 @@ def student_list(exam_id):
     identitas = db.engine.execute(sql_identitas)
 
     sql_hasil = text(
-        """select up.user_id, substring_index(trim(uj.nama), ' ', -2), truncate(up.hasil, 2)
+        """select up.user_id, substring_index(trim(uj.nama), ' ', -2), round(up.hasil, 2)
         from ujian_peserta up
         left join ujian uj on up.ujian_id = uj.id
         where up.deleted = 0 order by uj.nama asc
@@ -618,7 +618,7 @@ def print_all(exam_id):
     # 3. Query Identitas Siswa (Header Sertifikat)
     sql_identitas = text(
         """select up.user_id, s.nama, s.alamat, s.kepala_sekolah, s.nip_kepala_sekolah, 
-        u.nama, u.username, u.nis, u.ayah, u.ibu, u.tempat_lahir, u.tanggal_lahir, truncate(sum(up.hasil), 2)
+        u.nama, u.username, u.nis, u.ayah, u.ibu, u.tempat_lahir, u.tanggal_lahir, round(sum(up.hasil), 2)
         from ujian_peserta up
         left join sekolah s on up.sekolah_id = s.id
         left join user u on up.user_id = u.id
@@ -633,7 +633,7 @@ def print_all(exam_id):
     # 4. Query Nilai Per Mata Pelajaran (Isi Tabel)
     # Menggunakan filter yang sama agar sinkron
     sql_hasil = text(
-        """select up.user_id, substring_index(trim(uj.nama), ' ', -2), truncate(up.hasil, 2)
+        """select up.user_id, substring_index(trim(uj.nama), ' ', -2), round(up.hasil, 2)
         from ujian_peserta up
         left join ujian uj on up.ujian_id = uj.id
         where {} order by uj.nama asc

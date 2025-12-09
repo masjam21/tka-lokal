@@ -83,8 +83,10 @@
                                         <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk mengakhiri ujian?') == true) location.href = '{{url_for('exam.schedule.end', exam_id=i.ujian_id, schedule_id=i.jadwal_ujian_id, user_id=i.user_id, lesson_id=lesson_id)}}'" class="btn btn-sm btn-danger" title="Selesaikan Ujian"><i class="fa fa-stop"></i> Stop</a>
                                         {% endif %}
                                         
-                                        {# --- TOMBOL 2: RESET STATUS UJIAN --- ini di hapus #}
-                                        
+                                        {# --- TOMBOL 2: RESET STATUS UJIAN --- #}
+                                        {% if i.waktu_mulai is not none %}
+                                        <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk mereset status ujian?') == true) location.href = '{{url_for('exam.schedule.reset', exam_id=i.ujian_id, schedule_id=i.jadwal_ujian_id, user_id=i.user_id, lesson_id=lesson_id)}}'" class="btn btn-sm btn-warning" title="Reset Ujian"><i class="fa fa-refresh"></i> Reset Ujian</a>
+                                        {% endif %}
 
                                         {# --- TOMBOL 3: RESET LOGIN (FORCE LOGOUT) --- #}
                                         {% if i.user.session_token %}

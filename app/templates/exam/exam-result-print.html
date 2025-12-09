@@ -153,13 +153,14 @@
 								<td>{{ count.value }}</td>
 								{% set count.value = count.value + 1 %}
 								<td>{{j.ujian}}</td>
-								<td style="text-align: end">{{j.hasil}}</td>
+								<td style="text-align: end">{{ j.hasil }}</td>
 								<td>{{j.terbilang.title() if j.terbilang else '-'}}</td>
 							</tr>
 							{% endif %} {% endfor %}
 							<tr>
 								<td colspan="2" style="text-align: end">Jumlah</td>
-								<td style="text-align: end">{{i.total}}</td>
+								<!-- <td style="text-align: end">{{i.total}}</td> -->
+								<td style="text-align: end">{{ i.total }}</td>
 								<td>{{i.terbilang.title() if i.terbilang else '-'}}</td>
 							</tr>
 						</table>

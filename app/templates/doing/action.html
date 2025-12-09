@@ -113,6 +113,9 @@
         .desktop-nav-panel {
             display: none;
         }
+        .swal2-container {
+            z-index: 9999 !important;
+        }
     }
 </style>
 {% endblock %}
@@ -312,11 +315,18 @@
                     {% endfor %}
                 </div>
             </div>
-            <div class="card-footer">
+            <!-- <div class="card-footer">
                 <div class="d-grid gap-2">
                     <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin ingin mengakhiri ujian ini?') == true) location.href='{{url_for('doing.end')}}'" class="btn btn-danger">
                         <i class="fe fe-check-square me-2"></i>Selesai Ujian
                     </a>
+                </div>
+            </div> -->
+            <div class="card-footer">
+                <div class="d-grid gap-2">
+                    <button type="button" onclick="konfirmasiSelesai('{{url_for('doing.end')}}')" class="btn btn-danger">
+                        <i class="fe fe-check-square me-2"></i>Selesai Ujian
+                    </button>
                 </div>
             </div>
         </div>
@@ -340,23 +350,47 @@
         </div>
         {% endfor %}
     </div>
-
     <div class="d-grid gap-2 mt-auto">
+        <button type="button" onclick="konfirmasiSelesai('{{url_for('doing.end')}}')" class="btn btn-danger btn-lg" data-bs-dismiss="offcanvas">
+            <i class="fe fe-check-square me-2"></i>Selesai Ujian
+        </button>
+    </div>
+    <!-- <div class="d-grid gap-2 mt-auto">
         <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin ingin mengakhiri ujian ini?') == true) location.href='{{url_for('doing.end')}}'" class="btn btn-danger btn-lg">
             <i class="fe fe-check-square me-2"></i>Selesai Ujian
         </a>
-    </div>
+    </div> -->
   </div>
 </div>
 
 {% endblock content %}
 
 {% block script_custom %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const second = 1000;
     const minute = second * 60;
     const hour = minute * 60;
     const day = hour * 24;
+
+    // FUNGSI GLOBAL (Ditaruh di luar document.ready agar bisa dipanggil onclick HTML)
+    function konfirmasiSelesai(urlTarget) {
+        Swal.fire({
+            title: 'Akhiri Ujian?',
+            text: "Pastikan Anda sudah memeriksa semua jawaban. Anda tidak bisa kembali setelah ini.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33', 
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Selesai!',
+            cancelButtonText: 'Cek Lagi',
+            reverseButtons: true 
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = urlTarget;
+            }
+        })
+    }
 
     $( document ).ready(function() {
         // --- LOGIKA PILIHAN GANDA ---
@@ -369,7 +403,8 @@
                 var finalUrl = urlTemplate.replace('__OPT__', selected);
                 window.location.href = finalUrl;
             } else {
-                alert('Silakan pilih jawaban terlebih dahulu.');
+                // Opsional: Bisa diganti SweetAlert juga biar konsisten
+                Swal.fire('Oops...', 'Silakan pilih jawaban terlebih dahulu.', 'info');
             }
         });
 
@@ -378,7 +413,6 @@
         var endDate = new Date(startDate.getTime() + ({{ujian_peserta.jadwal_ujian.durasi}} * 60000));
         
         function updateTimerDisplay(timeString) {
-            // Update timer desktop dan mobile
             $('#countdown').html(timeString);
             $('#countdown-mobile').html(timeString);
         }
@@ -398,8 +432,18 @@
             if (remainingTime < 0) {
                 clearInterval(countDownTimer);
                 updateTimerDisplay("00:00:00");
-                alert("Waktu Habis!");
-                location.href = "{{url_for('doing.end')}}" 
+                
+                // --- UPDATE: Ganti alert biasa dengan SweetAlert agar konsisten ---
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Waktu Habis!',
+                    text: 'Ujian akan otomatis diselesaikan.',
+                    allowOutsideClick: false,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.href = "{{url_for('doing.end')}}";
+                });
             }
         }, 1000);
     });
