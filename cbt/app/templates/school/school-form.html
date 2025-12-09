@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('school.show')}}">Sekolah</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-6 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="id" value="{{id}}"/>
+                    {# <div class="form-group">
+                        <label for="inputName" class="form-label">Nama Sekolah</label>
+                        <input name="nama" type="text" class="form-control" id="inputName" value="{{form.nama or ''}}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputNPSN" class="form-label">NPSN</label>
+                        <input name="npsn" type="text" class="form-control" id="inputNPSN" value="{{form.npsn or ''}}" readonly>
+                    </div> #}
+                    <div class="form-group">
+                        <label for="inputAlamat" class="form-label">Alamat</label>
+                        <input name="alamat" type="text" class="form-control" id="inputAlamat" value="{{form.alamat or ''}}">
+                    </div>
+                    {# <div class="form-group">
+                        <label class="form-label">Kecamatan</label>
+                        <select name="kecamatan_id" class="form-control form-select" data-bs-placeholder="Pilih kecamatan . ." disabled="true">
+                            <option value="">Pilih . . </option>
+                            {% for i in list_kecamatan %}
+                            <option value="{{i.id}}" {{'selected' if form.kecamatan_id == i.id else ''}}>{{i.nama}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputEmail" class="form-label">Email</label>
+                        <input name="email" type="text" class="form-control" id="inputEmail" value="{{form.email or ''}}" readonly>
+                    </div> #}
+                    <div class="form-group">
+                        <label for="inputKepalaSekolah" class="form-label">Kepala Sekolah</label>
+                        <input name="kepala_sekolah" type="text" class="form-control" id="inputKepalaSekolah" value="{{form.kepala_sekolah or ''}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputNIP" class="form-label">NIP Kepala Sekolah</label>
+                        <input name="nip_kepala_sekolah" type="text" class="form-control" id="inputNIP" value="{{form.nip_kepala_sekolah or ''}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputHP" class="form-label">No HP Kepala Sekolah</label>
+                        <input name="no_hp_kepala_sekolah" type="text" class="form-control" id="inputHP" value="{{form.no_hp_kepala_sekolah or ''}}">
+                    </div>
+                    {# <div class="form-group">
+                        <label for="inputPassword" class="form-label">Password</label>
+                        <input name="password" type="password" class="form-control" id="inputPassword" readonly>
+                        {% if id is not none %}<small>*Kosongkan password apabila anda tidak ingin mengedit password.</small>{% endif %}
+                    </div> #}
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page"><a href={{url_for('exam.show')}}>Ujian</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daftar Jadwal Ujian</h3>
+                {% if current_user.role == 'admin' %}
+                <div class="card-options">
+                    <a href="{{url_for('exam.schedule.add', exam_id=exam.id)}}" class="btn btn-primary btn-sm"><i class="zmdi zmdi-plus me-2"></i>Tambah</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap border-bottom" id="basic-datatable">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0">No</th>
+                                <th class="border-bottom-0">Pelajaran</th>
+                                <th class="border-bottom-0">Sesi</th>
+                                <th class="border-bottom-0">Tanggal</th>
+                                <th class="border-bottom-0">Durasi</th>
+                                {% if current_user.role == 'proktor' %}
+                                <th class="border-bottom-0">Status</th>
+                                <th class="border-bottom-0">Kode Ujian</th>
+                                {% endif %}
+                                <th class="border-bottom-0">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in schedule_list %}
+                            <tr>
+                                <td>{{loop.index}}</td>
+                                <td>{{i.pelajaran.kode}} | {{i.pelajaran.nama}}</td>
+                                <td>{{i.sesi}}</td>
+                                <td>{{i.tanggal}}</td>
+                                <td>{{i.durasi}}</td>
+                                {% if current_user.role == 'proktor' %}
+                                <td>{{i.status}}</td>
+                                <td>{{i.kode}}</td>
+                                {% endif %}
+                                <td>
+                                    {% if current_user.role == 'admin' %}
+                                    <a href="{{url_for('exam.schedule.edit', exam_id=i.ujian_id, schedule_id=i.id)}}" class="btn btn-sm btn-primary">Edit</a>
+                                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin?') == true) location.href = '{{url_for('exam.schedule.delete', exam_id=i.ujian_id, schedule_id=i.id)}}'" class="btn btn-sm btn-danger">Hapus</a>
+                                    {% endif %}
+                                    {% if current_user.role == 'proktor' %}
+                                    {% if i.status == 'BERJALAN' %}
+                                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk menyelesaikan ujian?') == true) location.href = '{{url_for('exam.schedule.stop', exam_id=i.ujian_id, schedule_id=i.id)}}'" class="btn btn-sm btn-danger">Selesai</a>
+                                    {% else %}
+                                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk memulai ujian?') == true) location.href = '{{url_for('exam.schedule.start', exam_id=i.ujian_id, schedule_id=i.id)}}'" class="btn btn-sm btn-primary">Mulai</a>
+                                    {% endif %}
+                                    {# modified #}
+                                    <a href="{{url_for('exam.schedule.student_list', exam_id=i.ujian_id, schedule_id=i.id, lesson_id=i.pelajaran_id)}}" class="btn btn-sm btn-primary">Daftar Peserta</a>
+                                    {# modified #}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATA TABLE JS-->
+<script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.bootstrap5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/pdfmake.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/vfs_fonts.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    var table = $('#basic-datatable').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+    });
+</script>
+{% endblock script_custom %}
+

@@ -420,10 +420,10 @@ def student_list(exam_id):
 #         exam_id=exam_id,
 #         now_string=now_string,
 #     )
-@bp.route("/print/<exam_id>", methods=["GET"])
-@login_required
-@role_required(roles=["admin", "proktor"])
-def print_all(exam_id):
+# @bp.route("/print/<exam_id>", methods=["GET"])
+# @login_required
+# @role_required(roles=["admin", "proktor"])
+# def print_all(exam_id):
 
     school = request.args.get("school", default="", type=str)
 
@@ -491,7 +491,7 @@ def print_all(exam_id):
 
     # modified by grey
     sql_identitas = text(
-        """select up.user_id, s.nama, s.alamat, s.kepala_sekolah, s.nip_kepala_sekolah, u.nama, u.username, u.nis, u.ayah, u.tempat_lahir, u.tanggal_lahir, truncate(sum(up.hasil), 2)
+        """select up.user_id, s.nama, s.alamat, s.kepala_sekolah, s.nip_kepala_sekolah, u.nama, u.username, u.nis, u.ayah, u.ibu, u.tempat_lahir, u.tanggal_lahir, truncate(sum(up.hasil), 2)
         from ujian_peserta up
         left join sekolah s on up.sekolah_id = s.id
         left join user u on up.user_id = u.id
@@ -569,10 +569,11 @@ def print_all(exam_id):
             "nisn": row[6],
             "nis": row[7],
             "ayah": row[8],
-            "tempat_lahir": row[9],
-            "tanggal_lahir": row[10],
-            "total": "{{:.{}f}}".format(k).format(row[11] if row[11] is not None else 0.0),
-            "terbilang": t.parse("{{:.{}f}}".format(k).format(row[11] if row[11] is not None else 0.0)).getresult()
+            "ibu": row[9],
+            "tempat_lahir": row[10],
+            "tanggal_lahir": row[11],
+            "total": "{{:.{}f}}".format(k).format(row[12] if row[12] is not None else 0.0),
+            "terbilang": t.parse("{{:.{}f}}".format(k).format(row[12] if row[12] is not None else 0.0)).getresult()
         }
         for row in identitas
     ]
@@ -583,6 +584,123 @@ def print_all(exam_id):
         "exam/exam-result-print.html",
         title="Hasil Ujian",
         student_list=student_list,
+        school_list=school_list,
+        args=args,
+        ujian_list=ujian_list,
+        exam_id=exam_id,
+        now_string=now_string,
+        identitas_list=identitas_list,
+        hasil_list=hasil_list,
+        k=k
+    )
+
+# kode ini aman dari modifikasi jamhari -- hanya perlu ubah bulan jadi huruf
+@bp.route("/print/<exam_id>", methods=["GET"])
+@login_required
+@role_required(roles=["admin", "proktor"])
+def print_all(exam_id):
+    # 1. Tentukan Sekolah (Filter untuk Proktor)
+    school = request.args.get("school", default="", type=str)
+    args = request.args
+
+    if current_user.role == "proktor":
+        school = current_user.sekolah_id
+        args = {"school": school}
+
+    # 2. Buat Filter Query SQL
+    # Filter wajib: ID Ujian dan Status Deleted (Handle 0 atau NULL)
+    filter_query = "up.ujian_id = '{}' AND (up.deleted = 0 OR up.deleted IS NULL)".format(exam_id)
+    
+    # Filter opsional: Sekolah (jika ada)
+    if school:
+        filter_query += " AND up.sekolah_id = '{}'".format(school)
+
+    # 3. Query Identitas Siswa (Header Sertifikat)
+    sql_identitas = text(
+        """select up.user_id, s.nama, s.alamat, s.kepala_sekolah, s.nip_kepala_sekolah, 
+        u.nama, u.username, u.nis, u.ayah, u.ibu, u.tempat_lahir, u.tanggal_lahir, truncate(sum(up.hasil), 2)
+        from ujian_peserta up
+        left join sekolah s on up.sekolah_id = s.id
+        left join user u on up.user_id = u.id
+        left join ujian uj on up.ujian_id = uj.id
+        where {}
+        group by up.user_id, s.nama, s.alamat, s.kepala_sekolah, s.nip_kepala_sekolah, 
+        u.nama, u.username, u.nis, u.ayah, u.tempat_lahir, u.tanggal_lahir
+        order by u.nama asc""".format(filter_query)
+    )
+    identitas = db.engine.execute(sql_identitas)
+
+    # 4. Query Nilai Per Mata Pelajaran (Isi Tabel)
+    # Menggunakan filter yang sama agar sinkron
+    sql_hasil = text(
+        """select up.user_id, substring_index(trim(uj.nama), ' ', -2), truncate(up.hasil, 2)
+        from ujian_peserta up
+        left join ujian uj on up.ujian_id = uj.id
+        where {} order by uj.nama asc
+        """.format(filter_query)
+    )
+    hasil = db.engine.execute(sql_hasil)
+    
+    # 5. Formatting Data untuk Template
+    t = Terbilang(sep='.')
+    k = 2
+    
+    hasil_list = [
+        {
+            "id": row[0],
+            "ujian": row[1],
+            "hasil": "{:.{}f}".format(row[2] if row[2] is not None else 0.0, k),
+            "terbilang": t.parse("{:.{}f}".format(row[2] if row[2] is not None else 0.0, k)).getresult()
+        }
+        for row in hasil
+    ]
+
+    identitas_list = [
+        {
+            "id": row[0],
+            "sekolah": row[1],
+            "alamat": row[2],
+            "kepsek": row[3],
+            "nip": row[4],
+            "siswa": row[5],
+            "nisn": row[6],
+            "nis": row[7],
+            "ayah": row[8],
+            "ibu": row[9],
+            "tempat_lahir": row[10],
+            "tanggal_lahir": row[11],
+            "total": "{:.{}f}".format(row[12] if row[12] is not None else 0.0, k),
+            "terbilang": t.parse("{:.{}f}".format(row[12] if row[12] is not None else 0.0, k)).getresult()
+        }
+        for row in identitas
+    ]
+    
+    # Ambil info ujian dan sekolah untuk konteks (opsional, agar tidak error di template jika dipakai)
+    ujian_list = Ujian.query.filter(
+        Ujian.id == exam_id, or_(Ujian.deleted.is_(None), Ujian.deleted != True)
+    ).first()
+
+    school_list = (
+        Sekolah.query.filter(
+            or_(Sekolah.deleted.is_(None), Sekolah.deleted != True)
+        )
+        .order_by(Sekolah.nama.asc())
+        .all()
+    )
+    
+    # now_string = datetime.strftime(datetime.now(), "%d-%m-%Y")
+    now = datetime.now()
+    bulan_map = {
+        1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: "Juni",
+        7: "Juli", 8: "Agustus", 9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+    }
+    
+    now_string = "{} {} {}".format(now.day, bulan_map[now.month], now.year)
+    
+    return render_template(
+        "exam/exam-result-print.html",
+        title="Hasil Ujian",
+        student_list={}, # Tidak dipakai di template print baru, tapi dibiarkan agar aman
         school_list=school_list,
         args=args,
         ujian_list=ujian_list,
@@ -708,7 +826,7 @@ def upload(exam_id):
 @login_required
 @role_required(roles=["proktor"])
 def download(exam_id):
-    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/cbt')
+    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/tka')
     Session = sessionmaker(bind = engine)
     session = Session()
     # exam_list: list(Ujian) = (
@@ -733,7 +851,7 @@ def download(exam_id):
 @login_required
 @role_required(roles=["proktor"])
 def xlsx(exam_id, lesson_id, sesi):
-    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/cbt')
+    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/tka')
     Session = sessionmaker(bind = engine)
     session = Session()
     
@@ -805,7 +923,7 @@ def xlsx(exam_id, lesson_id, sesi):
 @login_required
 @role_required(roles=["proktor"])
 def pdf(exam_id, lesson_id, sesi):
-    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/cbt')
+    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/tka')
     Session = sessionmaker(bind = engine)
     session = Session()
 
@@ -919,14 +1037,57 @@ def pdf(exam_id, lesson_id, sesi):
     #     data=hasil_ujian_list,
     # )
 
+# @bp.route("/review/<ujian_peserta_id>", methods=["GET"])
+# @login_required
+# @role_required(roles=["admin", "proktor"])
+# def review(ujian_peserta_id):
+#     filter_sql_jawaban = "j.ujian_peserta_id = '" + ujian_peserta_id + "'"
+
+#     sql_jawaban = text(
+#         """select j.id, p.pertanyaan, p.jawaban as jawaban_benar, p.jumlah_pilihan, p.tipe_pertanyaan, p.pilihan_a, p.pilihan_b, p.pilihan_c, p.pilihan_d, j.jawaban as jawaban_siswa, j.nomor, j.benar as nilai
+#         from jawaban j
+#         left join pertanyaan p on j.pertanyaan_id = p.id
+#         where {} and (p.deleted <> 1 or j.deleted <> 1)""".format(
+#             filter_sql_jawaban
+#         )
+#     )
+#     result_sql_jawaban = db.engine.execute(sql_jawaban)
+
+#     jawaban_list = [
+#         {
+#             "id": row[0],
+#             "pertanyaan": row[1],
+#             "jawaban_benar": row[2],
+#             "jumlah_pilihan": row[3],
+#             "tipe_pertanyaan": row[4],
+#             "pilihan_a": row[5],
+#             "pilihan_b": row[6],
+#             "pilihan_c": row[7],
+#             "pilihan_d": row[8],
+#             # "pilihan_e": row[9],
+#             "jawaban_siswa": row[9],
+#             "nomor": row[10],
+#             "nilai": row[11],
+#         }
+#         for row in result_sql_jawaban
+#     ]
+
+#     return render_template("exam/exam-answer-review.html", title="Review Jawaban", jawaban_list=jawaban_list, ujian_peserta_id=ujian_peserta_id)
+
+
+# kode riview baru untuk analisa jawaban siswa mode by jamhari
 @bp.route("/review/<ujian_peserta_id>", methods=["GET"])
 @login_required
 @role_required(roles=["admin", "proktor"])
 def review(ujian_peserta_id):
     filter_sql_jawaban = "j.ujian_peserta_id = '" + ujian_peserta_id + "'"
 
+    # Update Query: Tambahkan p.pernyataan_1, p.pernyataan_2, p.pernyataan_3
     sql_jawaban = text(
-        """select j.id, p.pertanyaan, p.jawaban as jawaban_benar, p.jumlah_pilihan, p.tipe_pertanyaan, p.pilihan_a, p.pilihan_b, p.pilihan_c, p.pilihan_d, p.pilihan_e, j.jawaban as jawaban_siswa, j.nomor, j.benar as nilai
+        """select j.id, p.pertanyaan, p.jawaban as jawaban_benar, p.jumlah_pilihan, p.tipe_pertanyaan, 
+        p.pilihan_a, p.pilihan_b, p.pilihan_c, p.pilihan_d, 
+        p.pernyataan_1, p.pernyataan_2, p.pernyataan_3,
+        j.jawaban as jawaban_siswa, j.nomor, j.benar as nilai
         from jawaban j
         left join pertanyaan p on j.pertanyaan_id = p.id
         where {} and (p.deleted <> 1 or j.deleted <> 1)""".format(
@@ -935,8 +1096,15 @@ def review(ujian_peserta_id):
     )
     result_sql_jawaban = db.engine.execute(sql_jawaban)
 
-    jawaban_list = [
-        {
+    jawaban_list = []
+    for row in result_sql_jawaban:
+        # Parsing jawaban siswa untuk tipe Benar/Salah (misal "A,B,A") menjadi list
+        jawaban_siswa_raw = row[12]
+        jawaban_siswa_list = []
+        if row[4] in ['benar_salah', 'sesuai_tidak_sesuai'] and jawaban_siswa_raw:
+            jawaban_siswa_list = jawaban_siswa_raw.split(',')
+
+        jawaban_list.append({
             "id": row[0],
             "pertanyaan": row[1],
             "jawaban_benar": row[2],
@@ -946,22 +1114,100 @@ def review(ujian_peserta_id):
             "pilihan_b": row[6],
             "pilihan_c": row[7],
             "pilihan_d": row[8],
-            "pilihan_e": row[9],
-            "jawaban_siswa": row[10],
-            "nomor": row[11],
-            "nilai": row[12],
-        }
-        for row in result_sql_jawaban
-    ]
+            # Index kolom pernyataan (9, 10, 11)
+            "pernyataan_1": row[9],
+            "pernyataan_2": row[10],
+            "pernyataan_3": row[11],
+            "jawaban_siswa": jawaban_siswa_raw,
+            "jawaban_siswa_list": jawaban_siswa_list, # List untuk memudahkan template
+            "nomor": row[13],
+            "nilai": row[14],
+        })
 
     return render_template("exam/exam-answer-review.html", title="Review Jawaban", jawaban_list=jawaban_list, ujian_peserta_id=ujian_peserta_id)
 
+## tambahan cetak review
+@bp.route("/print_review/<ujian_peserta_id>", methods=["GET"])
+@login_required
+@role_required(roles=["admin", "proktor"])
+def print_review(ujian_peserta_id):
+    # 1. Ambil Data Ujian Peserta
+    ujian_peserta = UjianPeserta.query.get(ujian_peserta_id)
+    if not ujian_peserta:
+        abort(404)
+
+    # 2. Ambil Data Siswa Manual (Agar aman dan tidak error relationship)
+    user = User.query.get(ujian_peserta.user_id)
+    
+    # Buat variabel info untuk header template
+    info = {
+        "nama_siswa": user.nama if user else "-",
+        # Tambahkan data lain jika nanti dibutuhkan lagi
+    }
+
+    # 3. Query Jawaban (Tetap sama)
+    filter_sql_jawaban = "j.ujian_peserta_id = '" + ujian_peserta_id + "'"
+
+    sql_jawaban = text(
+        """select j.id, p.pertanyaan, p.jawaban as jawaban_benar, p.jumlah_pilihan, p.tipe_pertanyaan, 
+        p.pilihan_a, p.pilihan_b, p.pilihan_c, p.pilihan_d, 
+        p.pernyataan_1, p.pernyataan_2, p.pernyataan_3,
+        j.jawaban as jawaban_siswa, j.nomor, j.benar as nilai
+        from jawaban j
+        left join pertanyaan p on j.pertanyaan_id = p.id
+        where {} and (p.deleted <> 1 or j.deleted <> 1)""".format(
+            filter_sql_jawaban
+        )
+    )
+    result_sql_jawaban = db.engine.execute(sql_jawaban)
+
+    jawaban_list = []
+    for row in result_sql_jawaban:
+        jawaban_siswa_raw = row[12]
+        jawaban_siswa_list = []
+        
+        if row[4] in ['benar_salah', 'sesuai_tidak_sesuai'] and jawaban_siswa_raw:
+            jawaban_siswa_list = jawaban_siswa_raw.split(',')
+        elif row[4] == 'ceklis' and jawaban_siswa_raw:
+            jawaban_siswa_list = jawaban_siswa_raw.split(',')
+
+        jawaban_list.append({
+            "id": row[0],
+            "pertanyaan": row[1],
+            "jawaban_benar": row[2],
+            "jumlah_pilihan": row[3],
+            "tipe_pertanyaan": row[4],
+            "pilihan_a": row[5],
+            "pilihan_b": row[6],
+            "pilihan_c": row[7],
+            "pilihan_d": row[8],
+            "pernyataan_1": row[9],
+            "pernyataan_2": row[10],
+            "pernyataan_3": row[11],
+            "jawaban_siswa": jawaban_siswa_raw,
+            "jawaban_siswa_list": jawaban_siswa_list,
+            "nomor": row[13],
+            "nilai": row[14],
+        })
+
+    # 4. Render Template (Kirim variabel 'info')
+    return render_template(
+        "exam/exam-answer-print.html", 
+        title="Cetak Review Jawaban", 
+        jawaban_list=jawaban_list, 
+        info=info 
+    )
+
+## End tambahan cetak review
+
+
+### soal uraian
 @bp.route("/uraian/<exam_id>", methods=["GET"])
 @login_required
 @role_required(roles=["admin", "proktor"])
 def uraian(exam_id):
 
-    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/cbt')
+    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/tka')
     Session = sessionmaker(bind = engine)
     session = Session()
 
@@ -977,7 +1223,7 @@ def uraian(exam_id):
 @login_required
 @role_required(roles=["admin", "proktor"])
 def uraianresult(jadwal_ujian_id, pelajaran_id):
-    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/cbt')
+    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/tka')
     Session = sessionmaker(bind = engine)
     session = Session()
 

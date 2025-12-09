@@ -34,6 +34,7 @@ class User(db.Model, UserMixin):
     role = Column(String(20))
     password = Column(String(128))
     sekolah_id = Column(String(36), ForeignKey("sekolah.id", ondelete="CASCADE"))
+    session_token = db.Column(db.String(255), nullable=True)
 
     # data peserta
     nis = Column(String(100))

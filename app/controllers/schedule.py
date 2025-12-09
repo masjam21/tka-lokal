@@ -425,7 +425,7 @@ def student_list(exam_id, schedule_id, lesson_id):
     # if exam is None:
     #     abort(404)
 
-    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/cbt')
+    engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@localhost:3306/tka')
     Session = sessionmaker(bind = engine)
     session = Session()
 

@@ -293,74 +293,256 @@ def action(number=1):
 #         return redirect(url_for("doing.action", number=1))
 
 #     return redirect(url_for("doing.action", number=int(number) + 1))
-@bp.route("/answer", methods=["GET", "POST"])
+# @bp.route("/answer", methods=["GET", "POST"])
+# @login_required
+# @csrf.exempt
+# def answer():
+#     if request.method == "POST":
+#         ujian_peserta: UjianPeserta = UjianPeserta.query.filter(
+#             UjianPeserta.user_id == current_user.id,
+#             UjianPeserta.status == "BERJALAN",
+#             or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
+#         ).first()
+#         if ujian_peserta is None:
+#             abort(404)
+
+#         number = request.form.get("number")
+#         if number is None:
+#             abort(404)
+
+#         answer: Jawaban = Jawaban.query.filter(
+#             Jawaban.nomor == number,
+#             Jawaban.ujian_peserta_id == ujian_peserta.id,
+#             or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
+#             ).first()
+#         if answer is None:
+#             abort(404)
+
+#         pertanyaan: Pertanyaan = Pertanyaan.query.filter(
+#             Pertanyaan.id == answer.pertanyaan_id,
+#             or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+#         ).first()
+#         if pertanyaan is None:
+#             abort(404)
+
+#         next_dir = request.form.get("next")
+#         prev_dir = request.form.get("previous")
+#         pilgan = request.form.get("jawaban")
+#         uraian = request.form.get("jawaban_uraian")
+
+#         if pilgan is not None:
+#             opt = request.form.get("jawaban")
+
+#             answer.jawaban = opt
+
+#             answer.benar = pertanyaan.jawaban == opt
+
+#             db.session.commit()
+
+#         if uraian is not None:
+#             jawaban_uraian = request.form.get("jawaban_uraian")
+
+#             answer.jawaban = jawaban_uraian if jawaban_uraian != "" else None
+
+#             db.session.commit()
+
+#     jumlah_soal = Pertanyaan.query.filter(
+#         Pertanyaan.pelajaran_id == ujian_peserta.pelajaran_id,
+#         or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+#     ).count()
+
+#     if next_dir is not None:
+#         if (int(number) + 1) > jumlah_soal:
+#             return redirect(url_for("doing.action", number=1))
+#         else:
+#             return redirect(url_for("doing.action", number=int(number) + 1))
+#     if prev_dir is not None:
+#         if (int(number) - 1) <= 0:
+#             return redirect(url_for("doing.action", number=int(jumlah_soal)))
+#         else:
+#             return redirect(url_for("doing.action", number=int(number) - 1))
+
+@bp.route("/answer/<number>/<opt>", methods=["GET"])
 @login_required
-@csrf.exempt
-def answer():
-    if request.method == "POST":
-        ujian_peserta: UjianPeserta = UjianPeserta.query.filter(
-            UjianPeserta.user_id == current_user.id,
-            UjianPeserta.status == "BERJALAN",
-            or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
-        ).first()
-        if ujian_peserta is None:
-            abort(404)
+def answer(number, opt):
+    # 1. Cari data peserta ujian yang sedang berjalan
+    ujian_peserta: UjianPeserta = UjianPeserta.query.filter(
+        UjianPeserta.user_id == current_user.id,
+        UjianPeserta.status == "BERJALAN",
+        or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
+    ).first()
+    
+    if ujian_peserta is None:
+        abort(404)
 
-        number = request.form.get("number")
-        if number is None:
-            abort(404)
+    # 2. Cari data jawaban berdasarkan nomor soal
+    answer: Jawaban = Jawaban.query.filter(
+        Jawaban.nomor == number,
+        Jawaban.ujian_peserta_id == ujian_peserta.id,
+        or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
+    ).first()
+    
+    if answer is None:
+        abort(404)
 
-        answer: Jawaban = Jawaban.query.filter(
-            Jawaban.nomor == number,
-            Jawaban.ujian_peserta_id == ujian_peserta.id,
-            or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
-            ).first()
-        if answer is None:
-            abort(404)
+    # 3. Cari data pertanyaan asli untuk kunci jawaban
+    pertanyaan: Pertanyaan = Pertanyaan.query.filter(
+        Pertanyaan.id == answer.pertanyaan_id,
+        or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+    ).first()
+    
+    if pertanyaan is None:
+        abort(404)
 
-        pertanyaan: Pertanyaan = Pertanyaan.query.filter(
-            Pertanyaan.id == answer.pertanyaan_id,
-            or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
-        ).first()
-        if pertanyaan is None:
-            abort(404)
+    # 4. Simpan Jawaban Siswa
+    answer.jawaban = opt
+    # Cek kebenaran jawaban (untuk scoring otomatis)
+    answer.benar = (pertanyaan.jawaban == opt)
+    
+    db.session.commit()
 
-        next_dir = request.form.get("next")
-        prev_dir = request.form.get("previous")
-        pilgan = request.form.get("jawaban")
-        uraian = request.form.get("jawaban_uraian")
+    # 5. Hitung total soal untuk navigasi
+    jumlah_soal = Pertanyaan.query.filter(
+        Pertanyaan.pelajaran_id == ujian_peserta.pelajaran_id,
+        or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+    ).count()
 
-        if pilgan is not None:
-            opt = request.form.get("jawaban")
+    # 6. Redirect ke soal berikutnya (atau kembali ke no 1 jika sudah habis)
+    if (int(number) + 1) > jumlah_soal:
+        return redirect(url_for("doing.action", number=1))
 
-            answer.jawaban = opt
+    return redirect(url_for("doing.action", number=int(number) + 1))
 
-            answer.benar = pertanyaan.jawaban == opt
+@bp.route("/answer_checklist/<number>", methods=["POST"])
+@login_required
+def answer_checklist(number):
+    """Menerima jawaban checklist (beberapa pilihan). Menyimpan sebagai string terurut
+    misal 'A,C' dan menandai benar hanya jika set jawaban siswa sama persis dengan kunci.
+    """
+    ujian_peserta: UjianPeserta = UjianPeserta.query.filter(
+        UjianPeserta.user_id == current_user.id,
+        UjianPeserta.status == "BERJALAN",
+        or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
+    ).first()
+    if ujian_peserta is None:
+        abort(404)
 
-            db.session.commit()
+    answer: Jawaban = Jawaban.query.filter(
+        Jawaban.nomor == number,
+        Jawaban.ujian_peserta_id == ujian_peserta.id,
+        or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
+    ).first()
+    if answer is None:
+        abort(404)
 
-        if uraian is not None:
-            jawaban_uraian = request.form.get("jawaban_uraian")
+    pertanyaan: Pertanyaan = Pertanyaan.query.filter(
+        Pertanyaan.id == answer.pertanyaan_id,
+        or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+    ).first()
+    if pertanyaan is None:
+        abort(404)
 
-            answer.jawaban = jawaban_uraian if jawaban_uraian != "" else None
+    # Ambil daftar pilihan yang dipilih siswa
+    selected = request.form.getlist('opt')
 
-            db.session.commit()
+    if not selected:
+        # Tidak memilih apapun
+        answer.jawaban = None
+        answer.benar = False
+    else:
+        # Normalisasi: uppercase, hapus spasi, urutkan
+        selected_norm = [s.strip().upper() for s in selected if s and s.strip()]
+        selected_norm = sorted(set(selected_norm))
+        answer_str = ",".join(selected_norm)
+        answer.jawaban = answer_str
+
+        # Ambil kunci jawaban dari pertanyaan, bisa berupa 'A' atau 'A,C'
+        if pertanyaan.jawaban:
+            key_list = [k.strip().upper() for k in pertanyaan.jawaban.split(',') if k.strip()]
+            key_set = set(key_list)
+        else:
+            key_set = set()
+
+        student_set = set(selected_norm)
+
+        # Menilai: benar hanya jika set siswa sama persis dengan set kunci
+        answer.benar = (student_set == key_set)
+
+    db.session.commit()
 
     jumlah_soal = Pertanyaan.query.filter(
         Pertanyaan.pelajaran_id == ujian_peserta.pelajaran_id,
         or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
     ).count()
 
-    if next_dir is not None:
-        if (int(number) + 1) > jumlah_soal:
-            return redirect(url_for("doing.action", number=1))
-        else:
-            return redirect(url_for("doing.action", number=int(number) + 1))
-    if prev_dir is not None:
-        if (int(number) - 1) <= 0:
-            return redirect(url_for("doing.action", number=int(jumlah_soal)))
-        else:
-            return redirect(url_for("doing.action", number=int(number) - 1))
+    if (int(number) + 1) > jumlah_soal:
+        return redirect(url_for("doing.action", number=1))
+
+    return redirect(url_for("doing.action", number=int(number) + 1))
+
+
+@bp.route("/answer_benar_salah/<number>", methods=["POST"])
+@login_required
+def answer_benar_salah(number):
+    """Menerima jawaban Benar-Salah / Sesuai-Tidak Sesuai.
+    Menyimpan sebagai string terurut misal 'A,B,A'.
+    """
+    ujian_peserta: UjianPeserta = UjianPeserta.query.filter(
+        UjianPeserta.user_id == current_user.id,
+        UjianPeserta.status == "BERJALAN",
+        or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
+    ).first()
+    if ujian_peserta is None:
+        abort(404)
+
+    answer: Jawaban = Jawaban.query.filter(
+        Jawaban.nomor == number,
+        Jawaban.ujian_peserta_id == ujian_peserta.id,
+        or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
+    ).first()
+    if answer is None:
+        abort(404)
+
+    pertanyaan: Pertanyaan = Pertanyaan.query.filter(
+        Pertanyaan.id == answer.pertanyaan_id,
+        or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+    ).first()
+    if pertanyaan is None:
+        abort(404)
+
+    # Ambil 3 jawaban: 'A' (Sesuai/Benar) atau 'B' (Tidak Sesuai/Salah)
+    ans1 = request.form.get('answer_1') 
+    ans2 = request.form.get('answer_2') 
+    ans3 = request.form.get('answer_3') 
+    
+    selected_answers = [ans1, ans2, ans3]
+    
+    if None in selected_answers:
+        # Jika ada yang belum dijawab, simpan None dan False
+        answer.jawaban = None
+        answer.benar = False
+    else:
+        # Gabungkan menjadi string, misal 'A,B,A'
+        answer_str = ",".join(selected_answers)
+        answer.jawaban = answer_str
+
+        # Ambil kunci jawaban dari pertanyaan, misal 'A,B,A'
+        key_str = pertanyaan.jawaban if pertanyaan.jawaban else ""
+        
+        # Menilai: benar hanya jika string siswa sama persis dengan string kunci
+        answer.benar = (answer_str == key_str)
+
+    db.session.commit()
+
+    jumlah_soal = Pertanyaan.query.filter(
+        Pertanyaan.pelajaran_id == ujian_peserta.pelajaran_id,
+        or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+    ).count()
+
+    if (int(number) + 1) > jumlah_soal:
+        return redirect(url_for("doing.action", number=1))
+
+    return redirect(url_for("doing.action", number=int(number) + 1))
 
 @bp.route("/list", methods=["GET"])
 @login_required
@@ -390,7 +572,37 @@ def list():
         answer_list=answer_list,
     )
 
+### kode lama hanya soal piliahan ganda yang di nilai otomatis 
+# @bp.route("/end", methods=["GET", "POST"])
+# @login_required
+# def end():
+#     ujian_peserta: UjianPeserta = UjianPeserta.query.filter(
+#         UjianPeserta.user_id == current_user.id,
+#         UjianPeserta.status == "BERJALAN",
+#         or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
+#     ).first()
+#     if ujian_peserta is None:
+#         abort(404)
 
+#     ujian_peserta.waktu_selesai = datetime.datetime.now()
+#     ujian_peserta.status = "SELESAI"
+
+#     jumlah_soal = Pertanyaan.query.filter(
+#         Pertanyaan.pelajaran_id == ujian_peserta.pelajaran_id,
+#         Pertanyaan.tipe_pertanyaan == "pilihan_ganda",
+#         or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+#     ).count()
+#     jawaban_benar = Jawaban.query.join(Pertanyaan).filter(
+#         Jawaban.ujian_peserta_id == ujian_peserta.id, Jawaban.benar == True, Pertanyaan.tipe_pertanyaan == "pilihan_ganda"
+#     ).count()
+#     ujian_peserta.hasil = jawaban_benar / jumlah_soal * 100
+
+#     db.session.commit()
+
+#     flash("Anda telah menyelesaikan ujian.", "success")
+#     return redirect(url_for("doing.code"))
+
+## perbaikan kode baru untuk soal pilihan ganda, ceklist, benar salah, sesuai tidak sesuai serta uraian
 @bp.route("/end", methods=["GET", "POST"])
 @login_required
 def end():
@@ -405,21 +617,88 @@ def end():
     ujian_peserta.waktu_selesai = datetime.datetime.now()
     ujian_peserta.status = "SELESAI"
 
+    # 1. Hitung Total Soal (Semua Tipe)
     jumlah_soal = Pertanyaan.query.filter(
         Pertanyaan.pelajaran_id == ujian_peserta.pelajaran_id,
-        Pertanyaan.tipe_pertanyaan == "pilihan_ganda",
         or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
     ).count()
-    jawaban_benar = Jawaban.query.join(Pertanyaan).filter(
-        Jawaban.ujian_peserta_id == ujian_peserta.id, Jawaban.benar == True, Pertanyaan.tipe_pertanyaan == "pilihan_ganda"
+    
+    # 2. Hitung Jawaban Benar (Semua Tipe)
+    # Menggunakan > 0 agar lebih aman daripada == True
+    jawaban_benar = Jawaban.query.filter(
+        Jawaban.ujian_peserta_id == ujian_peserta.id, 
+        Jawaban.benar > 0, 
+        or_(Jawaban.deleted.is_(None), Jawaban.deleted != True)
     ).count()
-    ujian_peserta.hasil = jawaban_benar / jumlah_soal * 100
+
+    if jumlah_soal > 0:
+        ujian_peserta.hasil = jawaban_benar / jumlah_soal * 100
+    else:
+        ujian_peserta.hasil = 0
 
     db.session.commit()
 
     flash("Anda telah menyelesaikan ujian.", "success")
     return redirect(url_for("doing.code"))
+    
+# @bp.route("/uraian/<ujian_peserta_id>", methods=["POST"])
+# @login_required
+# @csrf.exempt
+# @role_required(roles=["admin", "proktor"])
+# def uraian(ujian_peserta_id):
+#     if request.method == "POST":
+#         errors = []
 
+#         number = request.form.get("nomor")
+#         nilai = request.form.get("nilai")
+
+#         if nilai == "":
+#             errors.append("Nilai tidak boleh kosong.")
+
+#         nomor_check: Jawaban = Jawaban.query.filter(
+#             Jawaban.nomor == number,
+#             or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
+#         ).first()
+#         if nomor_check is None:
+#             flash("Nomor soal tidak ditemukan.", "error")
+#             return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))
+
+#         pertanyaan: Pertanyaan = Pertanyaan.query.filter(
+#             Pertanyaan.id == nomor_check.pertanyaan_id,
+#             Pertanyaan.tipe_pertanyaan == "uraian"
+#         ).first()
+#         if pertanyaan is None:
+#             flash("Tipe soal bukan uraian.", "error")
+#             return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))
+
+#         if len(errors) > 0:
+#             flash("\\n".join(errors), "error")
+#         else:
+#             penilaian: Jawaban = Jawaban.query.filter(
+#                 Jawaban.nomor == number,
+#                 Jawaban.ujian_peserta_id == ujian_peserta_id,
+#                 or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
+#             ).first()
+
+#             if penilaian is None:
+#                 abort(404)
+
+#             hasil: UjianPeserta = UjianPeserta.query.filter(
+#                 UjianPeserta.id == ujian_peserta_id,
+#                 or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
+#             ).first()
+
+#             if hasil is None:
+#                 abort(404)
+
+#             penilaian.benar = nilai
+
+#             db.session.commit()
+
+#             flash("Berhasil menyimpan", "success")
+#             return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))
+
+#     return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))
 @bp.route("/uraian/<ujian_peserta_id>", methods=["POST"])
 @login_required
 @csrf.exempt
@@ -436,45 +715,61 @@ def uraian(ujian_peserta_id):
 
         nomor_check: Jawaban = Jawaban.query.filter(
             Jawaban.nomor == number,
+            Jawaban.ujian_peserta_id == ujian_peserta_id, # Tambahkan filter ini untuk akurasi
             or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
         ).first()
+        
         if nomor_check is None:
-            flash("Nomor soal tidak ditemukan.", "error")
+            flash("Jawaban tidak ditemukan.", "error")
             return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))
 
+        # Cek tipe soal dari tabel Pertanyaan
         pertanyaan: Pertanyaan = Pertanyaan.query.filter(
-            Pertanyaan.id == nomor_check.pertanyaan_id,
-            Pertanyaan.tipe_pertanyaan == "uraian"
+            Pertanyaan.id == nomor_check.pertanyaan_id
         ).first()
-        if pertanyaan is None:
+        
+        if pertanyaan is None or pertanyaan.tipe_pertanyaan != "uraian":
             flash("Tipe soal bukan uraian.", "error")
             return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))
 
         if len(errors) > 0:
-            flash("\\n".join(errors), "error")
+            flash("\n".join(errors), "error")
         else:
-            penilaian: Jawaban = Jawaban.query.filter(
-                Jawaban.nomor == number,
-                Jawaban.ujian_peserta_id == ujian_peserta_id,
-                or_(Jawaban.deleted.is_(None), Jawaban.deleted != True),
-            ).first()
+            # 1. Simpan Nilai Uraian
+            nomor_check.benar = nilai
+            # db.session.commit() # Commit nanti sekalian update hasil
 
-            if penilaian is None:
-                abort(404)
-
+            # 2. Hitung Ulang Total Nilai Siswa
+            # Ambil data peserta
             hasil: UjianPeserta = UjianPeserta.query.filter(
                 UjianPeserta.id == ujian_peserta_id,
                 or_(UjianPeserta.deleted.is_(None), UjianPeserta.deleted != True),
             ).first()
 
-            if hasil is None:
-                abort(404)
+            if hasil:
+                # Hitung total soal (Semua tipe)
+                jumlah_soal = Pertanyaan.query.filter(
+                    Pertanyaan.pelajaran_id == hasil.pelajaran_id,
+                    or_(Pertanyaan.deleted.is_(None), Pertanyaan.deleted != True),
+                ).count()
+                
+                # Hitung jawaban benar (Nilai > 0 dianggap benar/dapat poin)
+                # Ini mengasumsikan 1 soal = 1 poin dalam perhitungan count
+                # Jika Anda memberi nilai uraian 10, ini tetap dihitung 1 soal benar oleh .count()
+                jawaban_benar = Jawaban.query.filter(
+                    Jawaban.ujian_peserta_id == hasil.id, 
+                    Jawaban.benar > 0, # Ubah logika ke > 0 agar nilai angka masuk
+                    or_(Jawaban.deleted.is_(None), Jawaban.deleted != True)
+                ).count()
 
-            penilaian.benar = nilai
-
+                if jumlah_soal > 0:
+                    hasil.hasil = jawaban_benar / jumlah_soal * 100
+                else:
+                    hasil.hasil = 0
+            
             db.session.commit()
 
-            flash("Berhasil menyimpan", "success")
+            flash("Berhasil menyimpan dan memperbarui nilai.", "success")
             return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))
 
     return redirect(url_for("exam.review", ujian_peserta_id=ujian_peserta_id))

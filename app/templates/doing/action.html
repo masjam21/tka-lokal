@@ -10,7 +10,7 @@
         height: 100%;
         width: 100%;
         display: flex;
-        align-items: flex-start; /* Ubah ke flex-start agar nomor tetap di atas jika teks panjang */
+        align-items: flex-start;
         padding-top: 5px;
     }
     #number {
@@ -23,14 +23,15 @@
     }
     #answer {
         flex-grow: 1;
-        word-break: break-word; /* Mencegah teks keluar layar di HP */
+        word-break: break-word;
     }
 
     /* Tabel Benar/Salah Responsif */
     .table th, .table td {
         vertical-align: middle !important;
-        font-size: 0.9rem; /* Sedikit kecilkan font di mobile */
+        font-size: 0.9rem;
     }
+    
     /* Input Radio Scale */
     input[type=radio], input[type=checkbox] {
         transform: scale(1.3);
@@ -40,11 +41,11 @@
     /* Hover & Pointer */
     .list-group-item {
         cursor: pointer;
-        padding: 12px 15px; /* Perbesar padding untuk sentuhan jari */
+        padding: 12px 15px;
     }
     .list-group-item:hover, .list-group-item.active {
         background-color: #f0f2f5;
-        color: #000; /* Pastikan teks tetap terbaca saat aktif */
+        color: #000;
         border-color: #dee2e6;
     }
     .list-group-item.active {
@@ -55,35 +56,60 @@
     /* Sticky Header Mobile Specific */
     .mobile-sticky-header {
         position: sticky;
-        top: 0; /* Sesuaikan jika ada navbar lain, misal top: 60px */
+        top: 0;
         z-index: 999;
         background: white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         padding: 10px 15px;
-        margin-left: -15px; /* Kompensasi margin container bawaan template */
+        margin-left: -15px;
         margin-right: -15px;
         margin-bottom: 20px;
     }
 
-    /* Layout Tombol Footer di Mobile */
+    /* --- LAYOUT NAVIGASI (FOOTER) --- */
+    .footer-navigation {
+        display: flex;
+        justify-content: space-between; /* Kiri - Tengah - Kanan */
+        align-items: center;
+        gap: 10px;
+    }
+
+    .nav-item-prev, .nav-item-next {
+        flex: 0 0 auto;
+    }
+    
+    .nav-item-save {
+        flex: 0 0 auto;
+    }
+
+    /* --- TAMPILAN KHUSUS HP (Layar < 768px) --- */
     @media (max-width: 767.98px) {
-        .btn-nav-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        /* Grid Layout: Save di atas full width, Prev & Next di bawah bagi dua */
+        .footer-navigation {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* Dua kolom sama besar */
+            grid-template-areas: 
+                "save save"  
+                "prev next"; 
+            gap: 12px;
         }
-        .btn-prev, .btn-next {
-            flex: 1 0 45%; /* Lebar 50% kurang gap */
-        }
-        .btn-save-container {
-            flex: 1 0 100%; /* Lebar penuh */
-            order: -1; /* Taruh tombol simpan di atas prev/next atau ubah ke 3 untuk di bawah */
-            margin-bottom: 10px;
-        }
-        .btn-save {
+
+        /* Mapping Area Grid */
+        .nav-item-save { grid-area: save; }
+        .nav-item-prev { grid-area: prev; }
+        .nav-item-next { grid-area: next; }
+
+        /* Styling Tombol di HP agar mudah ditekan */
+        .footer-navigation .btn {
             width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px; /* Tombol lebih tinggi */
+            font-size: 1rem;
         }
-        /* Sembunyikan kolom kanan (daftar soal) default di mobile */
+
+        /* Sembunyikan panel kanan di mobile */
         .desktop-nav-panel {
             display: none;
         }
@@ -93,7 +119,7 @@
 
 {% block content %}
 
-{# --- MOBILE STICKY HEADER (Hanya muncul di layar kecil) --- #}
+{# --- MOBILE STICKY HEADER --- #}
 <div class="d-block d-md-none mobile-sticky-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
@@ -110,7 +136,7 @@
         </button>
     </div>
 </div>
-{# ---------------------------------------------------------- #}
+{# -------------------------- #}
 
 <br class="d-none d-md-block"><br class="d-none d-md-block">
 
@@ -118,7 +144,7 @@
     {# === KOLOM KIRI: SOAL === #}
     <div class="col-md-8">
         <div class="card">
-            {# Header Card Desktop (Disembunyikan di mobile karena sudah ada sticky header) #}
+            {# Header Card Desktop #}
             <div class="card-header d-none d-md-flex">
                 <h3 class="card-title">Soal No. {{jawaban.nomor}}</h3>
                 <div class="card-options">
@@ -131,10 +157,8 @@
                 <div class="mb-4 fs-16" style="line-height: 1.6;">
                     {{pertanyaan.pertanyaan|safe}}
                 </div>
-                 
-                {# ========================================== #}
-                {# 1. FORM UNTUK PILIHAN GANDA                #}
-                {# ========================================== #}
+                  
+                {# 1. FORM UNTUK PILIHAN GANDA #}
                 {% if pertanyaan.tipe_pertanyaan == 'pilihan_ganda' %}
                     <form id="quiz-form-{{jawaban.nomor}}" class="pilgan-form" 
                           data-url="{{ url_for('doing.answer', number=jawaban.nomor, opt='__OPT__') }}">
@@ -160,9 +184,7 @@
                         </div>
                     </form>
 
-                {# ========================================== #}
-                {# 2. FORM UNTUK CEKLIS                       #}
-                {# ========================================== #}
+                {# 2. FORM UNTUK CEKLIS #}
                 {% elif pertanyaan.tipe_pertanyaan == 'ceklis' %}
                     <form method="post" action="{{ url_for('doing.answer_checklist', number=jawaban.nomor) }}" id="quiz-form-{{jawaban.nomor}}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -188,9 +210,7 @@
                         </div>
                     </form>
                 
-                {# ========================================== #}
-                {# 3. FORM UNTUK BENAR/SALAH & SESUAI/TIDAK   #}
-                {# ========================================== #}
+                {# 3. FORM UNTUK BENAR/SALAH & SESUAI/TIDAK #}
                 {% elif pertanyaan.tipe_pertanyaan in ['benar_salah', 'sesuai_tidak_sesuai'] %}
                     <form method="post" action="{{ url_for('doing.answer_benar_salah', number=jawaban.nomor) }}" id="quiz-form-{{jawaban.nomor}}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -232,9 +252,7 @@
                         </div>
                     </form>
                 
-                {# ========================================== #}
-                {# 4. URAIAN                                  #}
-                {# ========================================== #}
+                {# 4. URAIAN #}
                 {% elif pertanyaan.tipe_pertanyaan == 'uraian' %}
                     <div class="alert alert-info">
                         <i class="fe fe-info me-2"></i>Tipe soal uraian tidak dinilai otomatis.
@@ -244,31 +262,33 @@
             </div>
             
             <div class="card-footer">
-                {# Navigasi Tombol (Mobile Friendly) #}
-                <div class="btn-nav-group">
+                <div class="footer-navigation">
                     
-                    {# Tombol SEBELUMNYA #}
-                    <div class="btn-prev">
-                        <a href="{{url_for('doing.action', number=jawaban.nomor-1) if jawaban.nomor > 1 else jumlah_soal}}" class="btn btn-outline-primary w-100">
+                    {# === Tombol SEBELUMNYA === #}
+                    <div class="nav-item-prev">
+                        <a href="{{url_for('doing.action', number=jawaban.nomor-1) if jawaban.nomor > 1 else 'javascript:void(0)'}}" 
+                           class="btn btn-outline-primary {{ 'disabled' if jawaban.nomor == 1 else '' }}">
                             <i class="fe fe-chevron-left me-1"></i> Prev
                         </a>
                     </div>
 
-                    {# Tombol SIMPAN #}
-                    <div class="btn-save-container text-center">
+                    {# === Tombol SIMPAN === #}
+                    <div class="nav-item-save">
                         {% if pertanyaan.tipe_pertanyaan in ['pilihan_ganda', 'ceklis', 'benar_salah', 'sesuai_tidak_sesuai'] %}
-                            <button type="submit" form="quiz-form-{{jawaban.nomor}}" class="btn btn-primary btn-save">
+                            <button type="submit" form="quiz-form-{{jawaban.nomor}}" class="btn btn-primary px-4">
                                 <i class="fe fe-save me-2"></i>Simpan Jawaban
                             </button>
                         {% endif %}
                     </div>
 
-                    {# Tombol SELANJUTNYA #}
-                    <div class="btn-next text-end">
-                        <a href="{{url_for('doing.action', number=jawaban.nomor+1) if jawaban.nomor < jumlah_soal else url_for('doing.action', number=1)}}" class="btn btn-outline-primary w-100">
+                    {# === Tombol SELANJUTNYA === #}
+                    <div class="nav-item-next">
+                        <a href="{{url_for('doing.action', number=jawaban.nomor+1) if jawaban.nomor < jumlah_soal else url_for('doing.action', number=1)}}" 
+                           class="btn btn-outline-primary">
                             Next <i class="fe fe-chevron-right ms-1"></i>
                         </a>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -349,7 +369,6 @@
                 var finalUrl = urlTemplate.replace('__OPT__', selected);
                 window.location.href = finalUrl;
             } else {
-                // Menggunakan SweetAlert jika ada, atau alert biasa
                 alert('Silakan pilih jawaban terlebih dahulu.');
             }
         });

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block style %}
+<style>
+    #container-answer {
+        height: 100%;
+        width: 100%;
+        display: flex;
+    }
+
+    #number {
+        width: 5%;
+    }
+
+    #answer {
+        width: 90%;
+    }
+</style>
+{% endblock style %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">Jawaban Uraian</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page">{#<a href="{{url_for('lesson.show')}}"></a>#}Jawaban Uraian</li>
+            {# <li class="breadcrumb-item1 active" aria-current="page">{{lesson.kode}}</li> #}
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                {#<h3 class="card-title">Daftar Jawaban "{{lesson.nama}}"</h3>#}
+                <h3 class="card-title">Daftar Jawaban Uraian</h3>
+                <div class="card-options">
+                    {# <a href="{{url_for('lesson.question.add', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm"><i class="zmdi zmdi-plus me-2"></i>Tambah</a>
+                    <a href="{{url_for('lesson.question.import_', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm ms-2"><i class="zmdi zmdi-upload me-2"></i>Import</a> #}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap border-bottom" id="basic-datatable">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0">No</th>
+                                <th class="border-bottom-0">Siswa</th>
+                                <th class="border-bottom-0">Ujian</th>
+                                <th class="border-bottom-0">Pelajaran</th>
+                                <th class="border-bottom-0">Pertanyaan</th>
+                                <th class="border-bottom-0">Jawaban</th>
+                                <th class="border-bottom-0">Nilai</th>
+                                <th class="border-bottom-0">Nomor Soal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in essay_test_result %}
+                                <tr>
+                                    <td>{{loop.index}}</td>
+                                    <td>{{i.siswa}}</td>
+                                    <td>{{i.ujian}}</td>
+                                    <td>{{i.mapel}}</td>
+                                    <td>{{i.pertanyaan}}</td>
+                                    <td>{{i.jawaban}}</td>
+                                    <td>{{i.benar}}</td>
+                                    <td>{{i.nomor}}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATA TABLE JS-->
+<script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.bootstrap5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/pdfmake.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/pdfmake/vfs_fonts.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    var table = $('#basic-datatable').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+    });
+</script>
+{% endblock script_custom %}

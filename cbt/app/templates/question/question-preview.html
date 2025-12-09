@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+{% endblock breadcrumb %}
+
+{% block style %}
+<style>
+#container-answer {
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+#number {
+    width: 5%;
+}
+#answer {
+    width: 90%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<br><br>
+<div class="row row-sm">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <p>{{pertanyaan.pertanyaan|safe}}</p>
+                <br>
+                <div class="list-group">
+                    {% for i in range(pertanyaan.jumlah_pilihan)%}
+                    <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                        <div id="container-answer">
+                            <div id="number">
+                                {{['A', 'B', 'C', 'D', 'E'][i]}}. 
+                            </div>
+                            <div id="answer">
+                                {{pertanyaan['pilihan_' + ['a', 'b', 'c', 'd', 'e'][i]]|safe}}
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block script %}
+{% endblock script %}
+
+{% block script_custom %}
+{% endblock script_custom %}
+

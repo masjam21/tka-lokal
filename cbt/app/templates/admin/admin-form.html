@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('admin.show')}}">Admin</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-lg-6 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="id" value="{{id}}"/>
+                        <div class="form-group">
+                            <label for="input-username" class="form-label">Username</label>
+                            <input name="username" type="text" class="form-control" id="input-username" value="{{form['username']}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-name" class="form-label">Nama</label>
+                            <input name="name" type="text" class="form-control" id="input-name" value="{{form['name']}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="input-password" class="form-label">Password</label>
+                            <input name="password" type="password" class="form-control" id="input-password">
+                            {% if id is not none %}<small>*Kosongkan password apabila anda tidak ingin mengedit password.</small>{% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <select name="role" class="form-control form-select" data-bs-placeholder="Pilih role">
+                                <option value="proktor" {{'selected' if form['role'] == 'proktor' else ''}}>Proktor</option>
+                                <option value="pembuat_soal" {{'selected' if form['role'] == 'pembuat_soal' else ''}}>Pembuat Soal</option>
+                                <option value="admin" {{'selected' if form['role'] == 'admin' else ''}}>Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sekolah</label>
+                            <select name="school" class="form-control form-select select2-show-search" data-bs-placeholder="Pilih sekolah . .">
+                                <option value="">Pilih . . </option>
+                                {% for i in school_list %}
+                                <option value="{{i.id}}" {{'selected' if form['sekolah_id'] == i.id else ''}}>{{i.nama}}</option>
+                                {% endfor %}
+                            </select>
+                            <small>*Diisi ketika role proktor.</small>
+                        </div>
+                        
+                    </div>
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- DATEPICKER JS -->
+<script src="{{url_for('static', filename='plugins/date-picker/date-picker.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/date-picker/jquery-ui.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/input-mask/jquery.maskedinput.js')}}"></script>
+
+<!-- TIMEPICKER JS -->
+<script src="{{url_for('static', filename='plugins/time-picker/jquery.timepicker.js')}}"></script>
+<script src="{{url_for('static', filename='plugins/time-picker/toggles.min.js')}}"></script>
+
+<!-- SELECT2 JS -->
+<script src="{{url_for('static', filename='plugins/select2/select2.full.min.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+<script>
+    $(document).ready(()=>{
+        $('.select2-show-search').select2({
+            minimumResultsForSearch: '',
+            width: '100%'
+        });
+    })
+</script>
+{% endblock script_custom %}
+

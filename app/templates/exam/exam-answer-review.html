@@ -24,24 +24,23 @@
     <div>
         <ol class="breadcrumb1">
             <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
-            <li class="breadcrumb-item1" aria-current="page">{#<a href="{{url_for('lesson.show')}}"></a>#}Pelajaran</li>
-            {# <li class="breadcrumb-item1 active" aria-current="page">{{lesson.kode}}</li> #}
+            <li class="breadcrumb-item1" aria-current="page">Pelajaran</li>
         </ol>
     </div>
 </div>
 {% endblock header %}
 
 {% block content %}
-<!-- Row -->
 <div class="row row-sm">
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header">
-                {#<h3 class="card-title">Daftar Jawaban "{{lesson.nama}}"</h3>#}
                 <h3 class="card-title">Daftar Jawaban</h3>
+                
                 <div class="card-options">
-                    {# <a href="{{url_for('lesson.question.add', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm"><i class="zmdi zmdi-plus me-2"></i>Tambah</a>
-                    <a href="{{url_for('lesson.question.import_', lesson_id=lesson.id)}}" class="btn btn-primary btn-sm ms-2"><i class="zmdi zmdi-upload me-2"></i>Import</a> #}
+                    <a href="{{ url_for('exam.print_review', ujian_peserta_id=ujian_peserta_id) }}" target="_blank" class="btn btn-primary btn-sm">
+                        <i class="fa fa-print"></i> Cetak Review
+                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -51,7 +50,7 @@
                             <tr>
                                 <th class="border-bottom-0">No</th>
                                 <th class="border-bottom-0" style="white-space: normal; min-width: 100px;">Pertanyaan</th>
-                                <th class="border-bottom-0">Berikan Nilai</th>
+                                <!-- <th class="border-bottom-0">Berikan Nilai</th> -->
                             </tr>
                         </thead>
                         <tbody>
@@ -62,10 +61,20 @@
                                     <ul>
                                         <li><b>Pertanyaan:</b></li>
                                         <li>{{i.pertanyaan|safe}}</li>
-                                        <li><br></li>
-                                        {% if i.tipe_pertanyaan != 'uraian' %}
+                                        <!-- <li><br></li> -->
+                                        
+                                        {# --- TAMPILAN PERNYATAAN (Untuk Benar/Salah & Sesuai/Tidak) --- #}
+                                        {% if i.tipe_pertanyaan in ['benar_salah', 'sesuai_tidak_sesuai'] %}
+                                            <li><b>Pernyataan:</b></li>
+                                            {% if i.pernyataan_1 %}<li>1. {{i.pernyataan_1|safe}}</li>{% endif %}
+                                            {% if i.pernyataan_2 %}<li>2. {{i.pernyataan_2|safe}}</li>{% endif %}
+                                            {% if i.pernyataan_3 %}<li>3. {{i.pernyataan_3|safe}}</li>{% endif %}
+                                            <!-- <li><br></li> -->
+                                        {% endif %}
+
+                                        {# --- TAMPILAN PILIHAN GANDA & CEKLIS --- #}
+                                        {% if i.tipe_pertanyaan in ['pilihan_ganda', 'ceklis'] %}
                                             <li><b>Pilihan:</b></li>
-                                            {# for j in ['a','b','c','d','e'][:i.jumlah_pilihan] #}
                                             {% for j in ['a','b','c','d'][:i.jumlah_pilihan] %}
                                             <li>
                                                 <div id="container-answer">
@@ -79,17 +88,30 @@
                                             </li>
                                             {% endfor %}
                                             <li><br></li>
-                                            <li><b>Jawaban Benar: {{i.jawaban_benar}}</b></li>
-                                            <li><br></li>
+                                        {% endif %}
+                                        
+                                        {# --- TAMPILAN JAWABAN (RAW) UNTUK SEMUA TIPE --- #}
+                                        {% if i.tipe_pertanyaan != 'uraian' %}
+                                            <li><b>Kunci Jawaban: {{i.jawaban_benar}}</b></li>
+                                            <!-- <li><br></li> -->
                                             <li><b>Jawaban Siswa: {{i.jawaban_siswa if i.jawaban_siswa else 'Tidak menjawab.'}}</b></li>
                                         {% else %}
-                                            <li><br></li>
-                                            <li><br>Jawaban Siswa : {{i.jawaban_siswa}}</li>
+                                            <!-- <li><br></li> -->
+                                            <li><b>Jawaban Uraian Siswa:</b><br>{{i.jawaban_siswa}}</li>
                                         {% endif %}
+                                        
+                                        <!-- <li><br></li> -->
+                                        <li><b>Status Nilai: 
+                                            {% if i.nilai and i.nilai > 0 %}
+                                                <span class="badge bg-success">Benar ({{ i.nilai }})</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Salah (0)</span>
+                                            {% endif %}
+                                        </b></li>
                                     <ul>
                                 </td>
-                                <td>
-                                    {% if i.tipe_pertanyaan != 'pilihan_ganda' %}
+                                <!-- <td>
+                                    {% if i.tipe_pertanyaan == 'uraian' %}
                                     <form method="POST" action="{{url_for('doing.uraian', ujian_peserta_id=ujian_peserta_id)}}">
                                         <div class="form-group">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -100,7 +122,7 @@
                                         <button class="btn btn-primary mt-4 mb-0">Simpan</button>
                                     </form>
                                     {% endif %}
-                                </td>
+                                </td> -->
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -110,12 +132,9 @@
         </div>
     </div>
 </div>
-<!-- End Row -->
 {% endblock content %}
 
 {% block script %}
-
-<!-- DATA TABLE JS-->
 <script src="{{url_for('static', filename='plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
 <script src="{{url_for('static', filename='plugins/datatable/js/dataTables.bootstrap5.js')}}"></script>
 <script src="{{url_for('static', filename='plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
@@ -128,7 +147,6 @@
 <script src="{{url_for('static', filename='plugins/datatable/js/buttons.colVis.min.js')}}"></script>
 <script src="{{url_for('static', filename='plugins/datatable/dataTables.responsive.min.js')}}"></script>
 <script src="{{url_for('static', filename='plugins/datatable/responsive.bootstrap5.min.js')}}"></script>
-
 {% endblock script %}
 
 {% block script_custom %}

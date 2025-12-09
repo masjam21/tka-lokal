@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br><br>
+<div class="row row-sm">
+    <div class="col-lg-8 m-auto">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daftar Pertanyaan</h3>
+                <div class="card-options">
+                    <span id="countdown"></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="btn-list text-center">
+                    {% for i in answer_list %}
+                    <a href="{{url_for('doing.action', number=i.nomor)}}" class="btn btn-icon {{'btn-success' if i.jawaban is not none else 'btn-default'}}">{{i.nomor}}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col">
+                    </div>
+                    <div class="col text-center">
+                        <div class="btn-group" role="group">
+                            <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin?') == true) location.href='{{url_for('doing.end', id=exam_student.id)}}'" class="btn btn-danger">Selesai</a>
+                        </div>
+                    </div>
+                    <div class="col text-end">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block script_custom %}
+{# <script>
+    const second = 1000;
+    const minute = second * 60;
+    const hour = minute * 60;
+    const day = hour * 24;
+
+    $( document ).ready(function() {
+        var startDate = new Date('{{exam_student.start}}')
+        var endDate = new Date(startDate.getTime() + {{exam_student.exam.duration}}*60000);
+        console.log(startDate)
+        console.log(endDate)
+
+        var countDownTimer = setInterval(() => {
+            var now = new Date().getTime();
+            var remainingTime = endDate - now;
+
+            daysLeft = Math.trunc(remainingTime / day);
+            hoursLeft = Math.trunc((remainingTime % day) / hour);
+            minutesLeft = Math.trunc((remainingTime % hour) / minute);
+            secondsLeft = Math.trunc((remainingTime % minute) / second);
+            
+            $('#countdown').html(`${('0' + hoursLeft).slice(-2)}:${('0' + minutesLeft).slice(-2)}:${('0' + secondsLeft).slice(-2)}`)
+            
+            if (daysLeft < 1 && hoursLeft < 1 && minutesLeft < 1 && secondsLeft < 1) {
+                location.href = "{{url_for('doing.end', id=exam_student.id)}}"
+            }
+        }, 1000);
+
+    });
+</script> #}
+{% endblock script_custom %}
+

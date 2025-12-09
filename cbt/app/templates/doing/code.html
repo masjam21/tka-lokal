@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br><br>
+<div class="row row-sm">
+    <div class="col-md-8 col-lg-6 col-xl-5 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="form-group">
+                            <label for="input-password" class="form-label">Kode Ujian</label>
+                            <input name="kode" type="text" class="form-control text-center" id="input-password" value="{{form['kode']}}">
+                        </div>
+                        <button class="btn btn-primary mt-4 mb-0">CARI UJIAN</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

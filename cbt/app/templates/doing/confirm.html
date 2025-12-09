@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br><br>
+<div class="row row-sm">
+    <div class="col-lg-8 m-auto">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Ketentuan Ujian</h3>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>Peserta hanya dapat melakukan ujian sebanyak 1 kali, pada saat tombol selesai dipilih, maka peserta dianggap telah selesai dan tidak dapat mengulangi ujian.</li>
+                    <li>Gunakan tombol "&#60 Sebelumnya" dan "Selanjutnya &#62" untuk menyimpan jawaban.</li>
+                    <li>Waktu ujian dimulai ketika tombol mulai ujian ditekan.</li>
+                    <li>Kode ujian dapat diminta ke admin.</li>
+                    <li>Kode pelajaran "{{pelajaran.kode}}"</li>
+                    <li>Mata pelajaran "{{pelajaran.nama}}"</li>
+                    <li>Tanggal Pelaksanaan "{{jadwal_ujian.tanggal}}"</li>
+                    <li>Durasi Ujian "{{jadwal_ujian.durasi}} menit"</li>
+                </ol>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center">
+                    <a href="javascript:void(0)" onclick="if (confirm('Apakah anda yakin untuk memulai ujian?') == true) location.href = '{{url_for('doing.start', kode_ujian=kode_ujian)}}'" class="btn btn-primary mt-4 mb-0">MULAI UJIAN</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

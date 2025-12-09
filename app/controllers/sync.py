@@ -633,7 +633,7 @@ def upload():
 
         data["peserta_didik"] = peserta_list
 
-        engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@127.0.0.1:3306/cbt')
+        engine = sqlalchemy.create_engine('mysql://cbt_aspd:Passw0rd123Aspd36!@127.0.0.1:3306/tka')
         Session = sessionmaker(bind = engine)
         session = Session()
 
@@ -859,3 +859,26 @@ def uploadimmediately():
                     flash("Terjadi kesalahan", "error")
 
     return render_template("sync/uploadimmediately.html", title="Unggah Hasil Ujian", form=form, exam_list=exam_list)
+
+
+## kode untuk shutdown sistem
+
+# @bp.route("/shutdown", methods=["GET"])
+# @login_required
+# @role_required(roles=["admin", "proktor"]) # Batasi akses
+# def shutdown_system():
+#     try:
+#         # Menjalankan perintah shutdown sistem
+#         # -h now : halt (matikan) sekarang
+#         flash("Sistem sedang dimatikan...", "success")
+        
+#         # Menggunakan os.system untuk eksekusi perintah shell
+#         # Pastikan user aplikasi punya hak akses sudo tanpa password untuk command ini
+#         os.system("sudo /usr/sbin/shutdown -h now")
+        
+#         return "Sistem sedang dimatikan. Silakan tunggu beberapa saat sebelum mencabut daya."
+        
+#     except Exception as e:
+#         logging.error(traceback.format_exc())
+#         flash(f"Gagal mematikan sistem: {str(e)}", "error")
+#         return redirect(url_for("sync.show"))

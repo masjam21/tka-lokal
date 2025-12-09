@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+
+    <!-- META DATA -->
+    <meta charset="UTF-8">
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=0'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="author" content="FW Studio">
+
+    <!-- FAVICON -->
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/brand/favicon.ico') }}" />
+
+    <!-- TITLE -->
+    <title>Login - CBT APP</title>
+
+    <!-- BOOTSTRAP CSS -->
+    <link id="style" href="{{ url_for('static', filename='plugins/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
+
+    <!-- STYLE CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+    
+    <!--- FONT-ICONS CSS -->
+    <link href="{{ url_for('static', filename='css/icons.css') }}" rel="stylesheet" />
+
+    <!-- COLOR SKIN CSS -->
+    <link id="theme" rel="stylesheet" type="text/css" media="all" href="{{ url_for('static', filename='colors/color1.css') }}" />
+
+</head>
+
+<body class="app sidebar-mini ltr">
+
+    <!-- BACKGROUND-IMAGE -->
+    <div class="login-img">
+
+        <!-- GLOABAL LOADER -->
+        <div id="global-loader">
+            <img src="{{ url_for('static', filename='images/loader.svg') }}" class="loader-img" alt="Loader">
+        </div>
+        <!-- /GLOABAL LOADER -->
+
+        <!-- PAGE -->
+        <div class="page">
+            <div class="">
+
+                <!-- CONTAINER OPEN -->
+                <div class="col col-login mx-auto mt-7">
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='images/brand/logo-white.png') }}" class="header-brand-img" alt="">
+                    </div>
+                </div>
+
+                <div class="container-login100">
+                    <div class="wrap-login100 p-6">
+                        <form method="POST" class="login100-form validate-form">
+                            <span class="login100-form-title pb-5">
+                                Login
+                            </span>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="wrap-input100 validate-input input-group">
+                                <span href="javascript:void(0)" class="input-group-text bg-white text-muted">
+                                    <i class="mdi mdi-account text-muted" aria-hidden="true"></i>
+                                </span>
+                                <input class="input100 border-start-0 form-control ms-0" type="text" name="username" placeholder="Username" value="{{form.username}}">
+                            </div>
+                            <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                <span href="javascript:void(0)" class="input-group-text bg-white text-muted">
+                                    <i class="mdi mdi-key text-muted" aria-hidden="true"></i>
+                                </span>
+                                <input class="input100 border-start-0 form-control ms-0" type="password" name="password" placeholder="Password">
+                                <a href="javascript:void(0)" class="input-group-text bg-white text-muted">
+                                    <i class="zmdi zmdi-eye text-muted" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            <div class="container-login100-form-btn">
+                                <input style="border: none;" class="login100-form-btn btn-primary" type="submit" value="Login"/>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+                <!-- CONTAINER CLOSED -->
+            </div>
+        </div>
+        <!-- End PAGE -->
+
+    </div>
+    <!-- BACKGROUND-IMAGE CLOSED -->
+
+    <!-- JQUERY JS -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+
+    <!-- BOOTSTRAP JS -->
+    <script src="{{ url_for('static', filename='plugins/bootstrap/js/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+
+    <!-- SWEET-ALERT JS -->
+    <script src="{{ url_for('static', filename='plugins/sweet-alert/sweetalert.min.js') }}"></script>
+
+    <!-- Perfect SCROLLBAR JS-->
+    <script src="{{ url_for('static', filename='plugins/p-scroll/perfect-scrollbar.js') }}"></script>
+
+    <!-- Color Theme js -->
+    <script src="{{ url_for('static', filename='js/themeColors.js') }}"></script>
+
+    <script>
+        // PAGE LOADING
+        $(window).on("load", function (e) {
+            $("#global-loader").fadeOut("slow");
+            
+            $("#Password-toggle a").on('click', function(event) {
+                event.preventDefault();
+                if ($('#Password-toggle input').attr("type") == "text") {
+                    $('#Password-toggle input').attr('type', 'password');
+                    $('#Password-toggle a i').addClass("zmdi-eye");
+                    $('#Password-toggle a i').removeClass("zmdi-eye-off");
+                } else if ($('#Password-toggle input').attr("type") == "password") {
+                    $('#Password-toggle input').attr('type', 'text');
+                    $('#Password-toggle a i').removeClass("zmdi-eye");
+                    $('#Password-toggle a i').addClass("zmdi-eye-off");
+                }
+            });
+
+            {% with errors = get_flashed_messages(with_categories=true) %}
+                {% if errors %}
+                    {% for category, msg in errors %}
+                    $('body').removeClass('timer-alert');
+                    swal({
+                        title: "Alert",
+                        text: '{{msg}}',
+                        type: "{{category}}",
+                        confirmButtonText: 'OK',
+                    });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        })
+
+    </script>
+</body>
+
+</html>

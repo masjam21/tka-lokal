@@ -1,0 +1,90 @@
+
+<!doctype html>
+<html lang="en" class="fullscreen-bg" dir="ltr">
+
+<head>
+	<title>LOGIN - CBT GUNUNGKIDUL</title>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+	<!-- VENDOR CSS -->
+	<link rel="stylesheet" href="{{ url_for('static', filename='klorofil/css/bootstrap.min.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='klorofil/vendor/font-awesome/css/font-awesome.min.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='klorofil/vendor/linearicons/style.css') }}">
+	<!-- MAIN CSS -->
+	<link rel="stylesheet" href="{{ url_for('static', filename='klorofil/css/main.css') }}">
+	<!-- GOOGLE FONTS -->
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
+	<!-- ICONS -->
+	<link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='klorofil/img/apple-icon.png') }}">
+	<!-- FAVICON -->
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/brand/favicon.ico') }}" />
+
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+
+<body>
+	<!-- WRAPPER -->
+	<div id="wrapper">
+		<div class="vertical-align-wrap">
+			<div class="vertical-align-middle">
+				<div class="auth-box ">
+					<div class="left">
+						<div class="content">
+							<div class="header">
+								<div class="logo text-center">
+									<img src="{{ url_for('static', filename='images/brand/logo-white.png') }}" height="107" alt="Gunungkidul Logo">
+								</div>
+								<p class="lead">Login to your account</p>
+							</div>
+							<form class="form-auth-small" method="POST">
+								<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+								<div class="form-group">
+									<label for="signin-username" class="control-label sr-only">Username</label>
+									<input type="text" class="form-control" id="signin-username" name="username" value="{{form.username}}" placeholder="Username">
+								</div>
+								<div class="form-group">
+									<label for="signin-password" class="control-label sr-only">Password</label>
+									<input type="password" class="form-control" id="signin-password" name="password" placeholder="Password">
+								</div>
+								<input style="border: none;" class="btn btn-primary btn-lg btn-block" type="submit" value="Login"/>
+							</form>
+						</div>
+					</div>
+					<div class="right">
+						<div class="overlay"></div>
+						<div class="content text">
+							{# <h1 class="heading">Asesmen Standardisasi Penilaian Daerah | 2025</h1> #}
+							<h1 class="heading">Computer-Based Test | 2025</h1>
+							<p>Kabupaten Gunungkidul</p>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- END WRAPPER -->
+	<!-- JQUERY JS -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+	<!-- SWEET-ALERT JS -->
+    <script src="{{ url_for('static', filename='plugins/sweet-alert/sweetalert.min.js') }}"></script>
+	<script>
+        $(document).ready(function() {
+            {% with errors = get_flashed_messages(with_categories=true) %}
+                {% if errors %}
+                    {% for category, msg in errors %}
+                    swal({
+                        title: "Alert",
+                        text: '{{msg}}',
+                        type: "{{category}}",
+                        confirmButtonText: 'OK',
+                    });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
+</body>
+
+</html>

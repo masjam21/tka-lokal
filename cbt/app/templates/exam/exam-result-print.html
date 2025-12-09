@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Hasil Ujian</title>
+		<style>
+			body {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				background-color: #fafafa;
+				font: 12pt "Tahoma";
+			}
+
+			* {
+				box-sizing: border-box;
+				-moz-box-sizing: border-box;
+			}
+
+			.page {
+				width: 210mm;
+				min-height: 297mm;
+				padding: 20mm;
+				margin: 10mm auto;
+				border: 1px #d3d3d3 solid;
+				border-radius: 5px;
+				background: white;
+				box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+			}
+
+			.subpage {
+				height: 257mm;
+			}
+
+			/*.subpage {
+            border: 5px red solid;
+            height: 257mm;
+            outline: 2cm #FFEAEA solid;
+        }*/
+
+			@page {
+				size: A4;
+				margin: 0;
+			}
+
+			@media print {
+				html,
+				body {
+					width: 210mm;
+					height: 297mm;
+				}
+
+				.page {
+					margin: 0;
+					border: initial;
+					border-radius: initial;
+					width: initial;
+					min-height: initial;
+					box-shadow: initial;
+					background: initial;
+					page-break-after: always;
+				}
+			}
+
+			.table-result tr td {
+				border: 0.5px solid #000;
+				border-collapse: collapse;
+				border-spacing: 0;
+				padding-right: 10px;
+				padding-left: 10px;
+				padding-top: 5px;
+				padding-bottom: 5px;
+			}
+
+			
+		</style>
+	</head>
+
+	<body>
+		<div class="book">
+			{% for i in identitas_list %}
+			<div class="page">
+				<div class="subpage">
+					<div style="text-align: center">
+						<table style="margin-left: auto; margin-right: auto">
+							<tr style="margin: auto auto">
+								<td><img src="{{url_for('static', filename='images/logo_gk.png')}}" height="100px" /></td>
+								<td style="padding-left: 20px; text-align: center">
+									<span style="font-size: large">PEMERINTAH KABUPATEN GUNUNGKIDUL</span><br />
+									<span style="font-size: large">DINAS PENDIDIKAN</span><br />
+									<span style="font-size: larger"><b>{{i.sekolah}}</b></span
+									><br />
+									<span style="font-size: medium">Alamat : {{i.alamat}}</span>
+								</td>
+							</tr>
+
+							<tr></tr>
+						</table>
+					</div>
+					<hr style="border: 1px solid #000; margin: 0 0" />
+					<hr style="border: 2px solid #000; margin: 2px 0" />
+					<br />
+					<div style="text-align: center">
+						<b>
+							SERTIFIKAT HASIL<br />
+							ASESMEN STANDARDISASI PENDIDIKAN DAERAH (ASPD)<br />
+							TAHUN AJARAN 2024/2025<br />
+						</b>
+					</div>
+					<br />
+					<div style="text-align: start">Yang bertanda tangan di bawah ini, Kepala Sekolah {{i.sekolah}} Kabupaten Gunungkidul menerangkan bahwa :</div>
+					<br />
+					<div>
+						<table class="table-biodata" style="text-align: top">
+							<tr>
+								<td>Nama</td>
+								<td>: {{i.siswa}}</td>
+							</tr>
+							<tr>
+								<td>Tempat / Tanggal Lahir</td>
+								<td>: {{i.tempat_lahir}}, {{i.tanggal_lahir.strftime('%d-%m-%Y')}}</td>
+							</tr>
+							<tr>
+								<td>Nama Orang Tua</td>
+								<td>: {{i.ayah}}</td>
+							</tr>
+							<tr>
+								<td>Nomor Induk Siswa</td>
+								<td>: {{i.nis}}</td>
+							</tr>
+							<tr>
+								<td>Nomor Induk Siswa Nasional</td>
+								<td>: {{i.nisn}}</td>
+							</tr>
+						</table>
+					</div>
+					<br />
+					<div>Telah mengikuti Asesmen Standardisasi Pendidikan Daerah (ASPD) Tahun Ajaran 2024/2025 dengan hasil sebagai berikut :</div>
+					<br />
+					<div>
+						<table class="table-result" cellspacing="0" style="width: 100%">
+							<tr style="text-align: center">
+								<td rowspan="2">No</td>
+								<td rowspan="2">Materi Asesmen</td>
+								<td colspan="2">Nilai</td>
+							</tr>
+							<tr>
+								<td style="text-align: center">Angka</td>
+								<td style="text-align: center; width: 50%">Huruf</td>
+							</tr>
+							{% set count = namespace(value=1) %} {% for j in hasil_list %} {% if i.id == j.id %}
+							<tr>
+								<td>{{ count.value }}</td>
+								{% set count.value = count.value + 1 %}
+								<td>{{j.ujian}}</td>
+								<td style="text-align: end">{{j.hasil}}</td>
+								<td>{{j.terbilang.title() if j.terbilang else '-'}}</td>
+							</tr>
+							{% endif %} {% endfor %}
+							<tr>
+								<td colspan="2" style="text-align: end">Jumlah</td>
+								<td style="text-align: end">{{i.total}}</td>
+								<td>{{i.terbilang.title() if i.terbilang else '-'}}</td>
+							</tr>
+						</table>
+					</div>
+					<!-- <table style="text-align: left; width: 100%">
+						<tr>
+							<td>Gunungkidul, 03-06-2025</td>
+						</tr>
+						<tr>
+							<td>Kepala Sekolah,</td>
+						</tr>
+						<tr>
+							<td><br /><br /><br /><br /></td>
+						</tr>
+						<tr>
+							<td><b>{{i.kepsek or '..........................'}}</b></td>
+						</tr>
+						<tr>
+							<td><b>{{'NIP. '+i.nip or '..........................' if i.nip else '' }}</b></td>
+						</tr>
+					</table> -->
+					<div style="width: 100%; margin-top: 20px;">
+						<div style="width: 300px; float: right; text-align: left;">
+							    <!-- Gunungkidul, {{now_string}}<br> -->
+								Gunungkidul, 03-06-2025<br>
+								Kepala Sekolah,<br><br><br><br><br>
+								<!-- <img src="{{url_for('static', filename='images/ttd_ks.png')}}" height="100px" /><br> -->
+							<b>{{ i.kepsek or '..........................' }}</b><br>
+							<b>{{ 'NIP. ' + i.nip if i.nip else 'NIP. ..........................' }}</b>
+						</div>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+		<script>
+			document.addEventListener("DOMContentLoaded", function (event) {
+				window.print();
+			});
+		</script>
+	</body>
+</html>

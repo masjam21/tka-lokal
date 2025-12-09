@@ -437,7 +437,7 @@ def print_bulk():
     )
 
     # group into pages of 10 (2 columns x 5 rows)
-    
+    pages = [students[i : i + 10] for i in range(0, len(students), 10)]
     waktu_cetak = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
 
     return render_template('student/kartu_bulk.html', pages=pages, include_password=include_password)
@@ -628,3 +628,36 @@ def logged_out(student_id):
     flash("Logout peserta berhasil.", "success")
 
     return redirect(url_for("student.show"))
+
+#logout paksa peserta didik;
+@bp.route("/force-logout/<student_id>", methods=["GET"])
+@login_required
+@role_required(roles=["admin", "proktor"])
+def force_logout(student_id):
+    student: User = User.query.filter(
+        User.id == student_id,
+        User.role == "peserta_didik",
+        or_(User.deleted.is_(None), User.deleted != True),
+    ).first()
+
+    if student is None:
+        abort(404)
+        
+    # Proktor hanya boleh melogout siswa sekolahnya sendiri
+    if current_user.role == "proktor" and student.sekolah_id != current_user.sekolah_id:
+        abort(403)
+
+    # Kosongkan token di database
+    student.session_token = None
+    db.session.commit()
+
+    flash("Peserta berhasil di-logout paksa.", "success")
+    
+    next_url = request.args.get('next')
+    if next_url:
+        return redirect(next_url)
+    # -------------------------
+    
+    # Default redirect jika tidak ada parameter next
+    school_param = request.args.get('school', '')
+    return redirect(url_for("student.show", school=school_param))

@@ -7,7 +7,9 @@ from flask import (
     render_template,
     request,
     url_for,
+    session,
 )
+import uuid
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import or_
 
@@ -57,10 +59,23 @@ def login():
                 flash("\\n".join(errors), "error")
             else:
                 login_user(user)
+            
+                if user.role == 'peserta_didik':
+                        # 1. Buat token baru
+                        new_token = str(uuid.uuid4())
+                        
+                        # 2. Simpan ke Database
+                        user.session_token = new_token
+                        db.session.commit()
+                        
+                        # 3. Simpan ke Session Browser
+                        session['session_token'] = new_token
+                    # ---------------------------------------
                 flash("Selamat datang.", "success")
 
                 next = request.args.get("next")
                 return redirect(next or url_for("index"))
+            
 
     return render_template("auth/login.html", form=form)
 

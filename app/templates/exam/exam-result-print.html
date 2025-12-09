@@ -103,8 +103,8 @@
 					<div style="text-align: center">
 						<b>
 							SERTIFIKAT HASIL<br />
-							ASESMEN STANDARDISASI PENDIDIKAN DAERAH (ASPD)<br />
-							TAHUN AJARAN 2024/2025<br />
+							TRY OUT TES KEMAMPUAN AKADEMIK DAERAH (TKAD)<br />
+							TAHUN AJARAN 2025/2026<br />
 						</b>
 					</div>
 					<br />
@@ -118,11 +118,11 @@
 							</tr>
 							<tr>
 								<td>Tempat / Tanggal Lahir</td>
-								<td>: {{i.tempat_lahir}}, {{i.tanggal_lahir.strftime('%d-%m-%Y')}}</td>
+								<td>: {{ i.tempat_lahir }}, {% if i.tanggal_lahir %}{{ i.tanggal_lahir.strftime('%d') }} {{ ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][i.tanggal_lahir.month - 1] }} {{ i.tanggal_lahir.strftime('%Y') }}{% else %}-{% endif %}</td>
 							</tr>
 							<tr>
 								<td>Nama Orang Tua</td>
-								<td>: {{i.ayah}}</td>
+								<td>: {{i.ayah if i.ayah else i.ibu}}</td>
 							</tr>
 							<tr>
 								<td>Nomor Induk Siswa</td>
@@ -135,7 +135,7 @@
 						</table>
 					</div>
 					<br />
-					<div>Telah mengikuti Asesmen Standardisasi Pendidikan Daerah (ASPD) Tahun Ajaran 2024/2025 dengan hasil sebagai berikut :</div>
+					<div>Telah mengikuti Try Out Tes Kemampuan Akademik Daerah (TKA-D) Tahun Ajaran 2025/2026 dengan hasil sebagai berikut :</div>
 					<br />
 					<div>
 						<table class="table-result" cellspacing="0" style="width: 100%">
@@ -181,15 +181,22 @@
 							<td><b>{{'NIP. '+i.nip or '..........................' if i.nip else '' }}</b></td>
 						</tr>
 					</table> -->
-					<div style="width: 100%; margin-top: 20px;">
-						<div style="width: 300px; float: right; text-align: left;">
-							    <!-- Gunungkidul, {{now_string}}<br> -->
-								Gunungkidul, 03-06-2025<br>
-								Kepala Sekolah,<br><br><br><br><br>
-								<!-- <img src="{{url_for('static', filename='images/ttd_ks.png')}}" height="100px" /><br> -->
+					<div style="width: 100%; margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+    					<div style="width: 300px; text-align: center; padding-bottom: 10px;">
+							<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=http://cbt.pendidikan.gunungkidulkab.go.id/verifikasi/{{ i.id }}" 
+								alt="QR Code Verifikasi" 
+								style="width: 100px; height: 100px;" />
+							<br>
+							<span style="font-size: 10pt;">Scan untuk verifikasi</span>
+						</div>
+
+						<div style="width: 300px; text-align: left;">
+							Gunungkidul, {{ now_string }}<br>
+							Kepala Sekolah,<br><br><br><br><br>
 							<b>{{ i.kepsek or '..........................' }}</b><br>
 							<b>{{ 'NIP. ' + i.nip if i.nip else 'NIP. ..........................' }}</b>
 						</div>
+
 					</div>
 				</div>
 			</div>

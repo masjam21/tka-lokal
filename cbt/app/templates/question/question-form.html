@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<div class="page-header">
+    <h1 class="page-title">{{title}}</h1>
+    <div>
+        <ol class="breadcrumb1">
+            <li class="breadcrumb-item1"><a href="{{url_for('index')}}">Beranda</a></li>
+            <li class="breadcrumb-item1" aria-current="page"><a href="{{url_for('lesson.show', lesson_id=lesson.id)}}">Pelajaran</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page"><a href="{{url_for('lesson.question.show', lesson_id=lesson.id)}}">{{lesson.kode}}</a></li>
+            <li class="breadcrumb-item1 active" aria-current="page">{{title}}</li>
+        </ol>
+    </div>
+</div>
+{% endblock header %}
+
+{% block content %}
+<!-- Row -->
+<div class="row row-sm">
+    <div class="col-md-10 col-lg-10 col-xl-7 m-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="id" value="{{id}}" />
+                    <div class="form-group">
+                        <label class="form-label">Pertanyaan</label>
+                        <textarea name="pertanyaan" id="input-question" class="form-control">{{form['pertanyaan']}}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-count" class="form-label">Jumlah Pilihan</label>
+                        <input name="jumlah_pilihan" type="number" class="form-control" id="input-count" value="{{form['jumlah_pilihan']}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-option-a" class="form-label">Pilihan A</label>
+                        <textarea name="pilihan_a" id="input-option-a" class="form-control">{{form['pilihan_a'] or ''}}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-option-b" class="form-label">Pilihan B</label>
+                        <textarea name="pilihan_b" id="input-option-b" class="form-control">{{form['pilihan_b'] or ''}}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-option-c" class="form-label">Pilihan C</label>
+                        <textarea name="pilihan_c" id="input-option-c" class="form-control">{{form['pilihan_c'] or ''}}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-option-d" class="form-label">Pilihan D</label>
+                        <textarea name="pilihan_d" id="input-option-d" class="form-control">{{form['pilihan_d'] or ''}}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-option-e" class="form-label">Pilihan E</label>
+                        <textarea name="pilihan_e" id="input-option-e" class="form-control">{{form['pilihan_e'] or ''}}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-answer" class="form-label">Jawaban</label>
+                        <select name="jawaban" id="input-answer" class="form-control form-select" data-bs-placeholder="Select Country">
+                            <option value="A" {{'selected' if form['jawaban'] == 'A' else ''}}>A</option>
+                            <option value="B" {{'selected' if form['jawaban'] == 'B' else ''}}>B</option>
+                            <option value="C" {{'selected' if form['jawaban'] == 'C' else ''}}>C</option>
+                            <option value="D" {{'selected' if form['jawaban'] == 'D' else ''}}>D</option>
+                            <option value="E" {{'selected' if form['jawaban'] == 'E' else ''}}>E</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary mt-4 mb-0">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+{% endblock content %}
+
+{% block script %}
+
+<!-- INTERNAL SUMMERNOTE Editor JS -->
+<script src="{{url_for('static', filename='plugins/summernote/summernote1.js')}}"></script>
+
+{% endblock script %}
+
+{% block script_custom %}
+
+<script>
+    function initSummernote(id) {
+        $(id).summernote({
+            fontNames: ['Arial', 'Arial Black'],
+            addDefaultFonts: false,
+            toolbar: [
+                ['style', ['bold', 'italic', 'underline', 'clear']],
+                ['font', ['strikethrough', 'superscript', 'subscript']],
+                ['fontsize', ['fontname', 'fontsize']],
+                ['para', ['ol', 'paragraph']],
+                ['insert', ['picture', 'table']],
+            ],
+            callbacks: {
+                onImageUpload: function(image) {
+                    var data = new FormData();
+                    data.append("image", image[0]);
+                    $.ajax({
+                        url: "{{url_for('image.upload', pelajaran_id=lesson.id)}}",
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: data,
+                        type: "POST",
+                        success: function(filename) {
+                            var image = $('<img>').attr('src', '/image/get/' + filename).addClass("img-fluid");
+                            $(id).summernote("insertNode", image[0]);
+                        },
+                        error: function(err) {
+                            alert('gagal menambahkan gambar')
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        initSummernote('#input-question')
+        initSummernote('#input-option-a')
+        initSummernote('#input-option-b')
+        initSummernote('#input-option-c')
+        initSummernote('#input-option-d')
+        initSummernote('#input-option-e')
+
+    });
+</script>
+{% endblock script_custom %}
